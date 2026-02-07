@@ -1,0 +1,56 @@
+name: myapp
+description: "Krishi Vaidhya - AI Crop Disease Doctor"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.1.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # --- UI & Fonts ---
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+  intl: ^0.19.0
+
+  # --- State & Storage ---
+  provider: ^6.1.2
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.1
+  path: ^1.8.3
+
+  # --- Camera & Gallery ---
+  camera: ^0.10.5
+  permission_handler: ^11.0.1
+  # We keep the NEW version here
+  image_picker: ^1.1.2    
+
+  # --- AI Engine ---
+  flutter_tflite: ^1.0.1
+
+  # --- Phone & Urls ---
+  url_launcher: ^6.2.1
+
+  # --- Hardware Sensors ---
+  environment_sensors: ^0.3.0
+  sensors_plus: ^5.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+# --- THE FIX IS HERE ---
+dependency_overrides:
+  image_picker: ^1.1.2
+
+flutter:
+  uses-material-design: true
+
+  # --- Assets ---
+  assets:
+    - assets/images/
+    - assets/model/model.tflite
+    - assets/model/labels.txt
