@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/theme_provider.dart'; // <--- 1. Import this
-import 'screens/login_screen.dart'; 
+import 'screens/language_screen.dart'; // <--- Start with Language Selection
 
 void main() {
   runApp(
@@ -11,7 +11,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()), // <--- 2. Add Provider
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -23,7 +23,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 3. Listen to ThemeProvider
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return Consumer<LanguageProvider>(
@@ -31,8 +30,6 @@ class MyApp extends StatelessWidget {
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'Krishi Vaidhya',
-              
-              // --- THEME CONFIGURATION ---
               themeMode: themeProvider.themeMode, 
               theme: ThemeData(
                 brightness: Brightness.light,
@@ -48,7 +45,7 @@ class MyApp extends StatelessWidget {
               darkTheme: ThemeData(
                 brightness: Brightness.dark,
                 primarySwatch: Colors.green,
-                scaffoldBackgroundColor: const Color(0xFF121212), // Dark Grey
+                scaffoldBackgroundColor: const Color(0xFF121212),
                 useMaterial3: true,
                 appBarTheme: const AppBarTheme(
                   backgroundColor: Color(0xFF1F1F1F),
@@ -57,9 +54,7 @@ class MyApp extends StatelessWidget {
                 ),
                 cardColor: const Color(0xFF1F1F1F),
               ),
-              // ---------------------------
-
-              home: const LoginScreen(), 
+              home: const LanguageScreen(), // <--- 4. Changed from LoginScreen
             );
           },
         );

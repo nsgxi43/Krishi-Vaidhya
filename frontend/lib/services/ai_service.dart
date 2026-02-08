@@ -34,7 +34,7 @@ class AiService {
         // 2. Upload to Backend
         var request = http.MultipartRequest(
           'POST', 
-          Uri.parse('http://127.0.0.1:5000/api/diagnosis')
+          Uri.parse('http://localhost:5000/api/diagnosis')
         );
         request.files.add(
           http.MultipartFile.fromBytes(

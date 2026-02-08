@@ -5,7 +5,7 @@ Fetches nearby agricultural stores using Google Places API.
 """
 
 import math
-from ..location.location_service import nearby_search
+from location.location_service import nearby_search  # type: ignore
 
 
 def calculate_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -62,7 +62,7 @@ def get_nearby_agri_stores(location: dict, radius_km: int = 10) -> list:
                     
                     store = {
                         "name": place.get("name"),
-                        "distance_km": round(distance, 2),
+                        "distance_km": round(distance, 2),  # type: ignore
                         "rating": place.get("rating"),
                         "maps_url": f"https://maps.google.com/?q={place_lat},{place_lng}",
                         "address": place.get("vicinity")
@@ -76,7 +76,7 @@ def get_nearby_agri_stores(location: dict, radius_km: int = 10) -> list:
         stores.sort(key=lambda x: x["distance_km"])
         
         # Return top 10
-        return stores[:10]
+        return stores[:10]  # type: ignore
     
     except Exception as e:
         print(f"Failed to fetch agri stores: {e}")

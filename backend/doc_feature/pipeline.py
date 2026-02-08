@@ -8,18 +8,18 @@ import os
 
 # --- OPTIONAL MOCK FOR TENSORFLOW ---
 try:
-    import tensorflow as tf
+    import tensorflow as tf  # type: ignore
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-from .infer import run_inference
-from .gradcam import run_gradcam
-from .llm import get_llm_explanation
-from db.diagnosis_service import create_diagnosis
-from location.location_service import normalize_location
+from .infer import run_inference  # type: ignore
+from .gradcam import run_gradcam  # type: ignore
+from .llm import get_llm_explanation  # type: ignore
+from db.diagnosis_service import create_diagnosis  # type: ignore
+from location.location_service import normalize_location  # type: ignore
 
 MODEL_PATH = os.path.join(BASE_DIR, "model", "plant_disease_model.h5")
 
@@ -47,15 +47,34 @@ def run_pipeline(image_path: str, user_id: str, lat: float, lng: float) -> dict:
     Returns:
         Complete diagnosis with location and nearby agri stores
     """
-    # Step 1: CNN Inference
-    cnn_output = run_inference(image_path)
-    cnn_output["userId"] = user_id
-    
-    # Step 2: Grad-CAM Explainability
-    cnn_output = run_gradcam(image_path, cnn_output, model)
-    
-    # Step 3: LLM Explanation
-    llm_output = get_llm_explanation(cnn_output)
+    # Step 0: Check for Local AI
+    if not TF_AVAILABLE:
+        print("Using Gemini Vision for diagnosis (Local AI missing)...")
+        from .llm import analyze_image_with_gemini  # type: ignore
+        
+        # Cloud AI does everything in one shot
+        cloud_result = analyze_image_with_gemini(image_path)
+        
+        cnn_output = {
+            "crop": cloud_result.get("crop", "Unknown"),
+            "predicted_disease": cloud_result.get("predicted_disease", "Unknown"),
+            "confidence": cloud_result.get("confidence", 0.0),
+            "explainability": cloud_result.get("explainability", {}),
+            "userId": user_id
+        }
+        llm_output = cloud_result.get("llm", {})
+        
+        # Skip steps 1, 2, 3
+    else: 
+        # Step 1: CNN Inference
+        cnn_output = run_inference(image_path)
+        cnn_output["userId"] = user_id
+        
+        # Step 2: Grad-CAM Explainability
+        cnn_output = run_gradcam(image_path, cnn_output, model)
+        
+        # Step 3: LLM Explanation
+        llm_output = get_llm_explanation(cnn_output)
     
     # Step 4: Normalize Location
     location = normalize_location(lat, lng)
@@ -72,7 +91,7 @@ def run_pipeline(image_path: str, user_id: str, lat: float, lng: float) -> dict:
     )
     
     # Step 6: Get Nearby Agri Stores
-    from .agri_store_service import get_nearby_agri_stores
+    from .agri_store_service import get_nearby_agri_stores  # type: ignore
     agri_stores = get_nearby_agri_stores(location, radius_km=10)
     
     # Final output

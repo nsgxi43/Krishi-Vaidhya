@@ -30,20 +30,20 @@ def _preprocess(image_path: str):
     if not CV2_AVAILABLE:
         raise ImportError("OpenCV not available")
 
-    img = cv2.imread(image_path)
+    img = cv2.imread(image_path)  # type: ignore
     if img is None:
         raise FileNotFoundError(f"Image not found: {image_path}")
 
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # type: ignore
+    img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))  # type: ignore
     img = img.astype("float32") / 255.0
-    return np.expand_dims(img, axis=0)
+    return np.expand_dims(img, axis=0)  # type: ignore
 
 
 def compute_gradcam(image_tensor, model):
     if not TF_AVAILABLE or model is None:
         # Return dummy heatmap
-        return np.zeros((IMG_SIZE, IMG_SIZE))
+        return np.zeros((IMG_SIZE, IMG_SIZE))  # type: ignore
 
     last_conv = model.get_layer(LAST_CONV_LAYER)
 
@@ -80,7 +80,7 @@ def compute_gradcam(image_tensor, model):
     return heatmap.numpy()
 
 
-def gradcam_summary(heatmap: np.ndarray) -> str:
+def gradcam_summary(heatmap) -> str:
     mean = float(heatmap.mean())
 
     if mean < 0.3:
@@ -92,6 +92,13 @@ def gradcam_summary(heatmap: np.ndarray) -> str:
 
 
 def run_gradcam(image_path: str, cnn_output: dict, model) -> dict:
+    if not CV2_AVAILABLE:
+        cnn_output["explainability"] = {
+            "method": "Mock Grad-CAM",
+            "summary": "Mock explanation only (Missing CV2)"
+        }
+        return cnn_output
+
     image_tensor = _preprocess(image_path)
     heatmap = compute_gradcam(image_tensor, model)
 
