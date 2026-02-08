@@ -1,10 +1,10 @@
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
 import '../utils/translations.dart';
-import '../services/ai_service.dart'; // Import AI Service
+import '../services/api_service.dart'; // Import API Service
 import 'result_screen.dart'; // Import Result Screen
 
 class ImagePreviewScreen extends StatelessWidget {
@@ -12,42 +12,45 @@ class ImagePreviewScreen extends StatelessWidget {
 
   const ImagePreviewScreen({super.key, required this.imagePath});
 
-  // LOGIC: Analyze the image using TFLite
+  // LOGIC: Analyze the image using Backend (Gemini/CNN)
   Future<void> _analyzeImage(BuildContext context) async {
     // 1. Show Loading Indicator
     showDialog(
       context: context,
-      barrierDismissible: false, // User cannot click outside to close
+      barrierDismissible: false,
       builder: (ctx) => const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             CircularProgressIndicator(color: Colors.white),
             SizedBox(height: 16),
-            Text("Analyzing...", style: TextStyle(color: Colors.white)),
+            Text("Analyzing crop...", style: TextStyle(color: Colors.white)),
           ],
         ),
       ),
     );
 
     try {
-      // 2. Ensure Model is Loaded
-      await AiService.loadModel();
+      // 2. Upload to Backend
+      // TODO: Get actual user location if available. Using default for now.
+      final response = await ApiService.uploadImage(
+        imagePath, 
+        "user_123", // Replace with real user ID from Provider if available
+        12.9716, // Default Lat (Bangalore)
+        77.5946  // Default Lng (Bangalore)
+      );
 
-      // 3. Run Prediction
-      final predictions = await AiService.classifyImage(imagePath);
-
-      // 4. Close Loading Dialog
+      // 3. Close Loading Dialog
       if (context.mounted) Navigator.pop(context);
 
-      if (predictions != null && predictions.isNotEmpty) {
-        // 5. Success! Go to Result Screen
+      if (response != null) {
+        // 4. Success! Go to Result Screen
         if (context.mounted) {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  ResultScreen(imagePath: imagePath, predictions: predictions),
+                  ResultScreen(imagePath: imagePath, response: response),
             ),
           );
         }
@@ -56,7 +59,8 @@ class ImagePreviewScreen extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Could not identify disease. Try a clearer photo."),
+              content: Text("Analysis failed. Please try again."),
+              backgroundColor: Colors.red,
             ),
           );
         }
@@ -92,7 +96,7 @@ class ImagePreviewScreen extends StatelessWidget {
           Expanded(
             child: kIsWeb
                 ? Image.network(imagePath, fit: BoxFit.contain)
-                : Image.file(File(imagePath), fit: BoxFit.contain),
+                : Image.file(io.File(imagePath), fit: BoxFit.contain),
           ),
 
           // 2. Validation Area (White Box)

@@ -1,15 +1,21 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' as io; // Use prefix to avoid conflicts and accidental usage
+import 'package:flutter/foundation.dart'; 
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart'; // Add http_parser to pubspec if missing, or use string content type
+import 'package:http_parser/http_parser.dart';
+import '../models/diagnosis_response.dart';
 
 class ApiService {
   static String get baseUrl {
-    if (Platform.isAndroid) {
-      return "http://10.0.2.2:5000/api";
-    } else {
+    if (kIsWeb) {
       return "http://127.0.0.1:5000/api";
     }
+    
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return "http://10.0.2.2:5000/api";
+    }
+    
+    return "http://127.0.0.1:5000/api";
   }
 
   // --- AUTH ---
@@ -39,7 +45,8 @@ class ApiService {
   }
 
   // --- DIAGNOSIS ---
-  static Future<Map<String, dynamic>?> uploadImage(File imageFile, String userId, double lat, double lng) async {
+  // --- DIAGNOSIS ---
+  static Future<DiagnosisResponse?> uploadImage(String imagePath, String userId, double lat, double lng) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/diagnosis'));
       
@@ -47,21 +54,37 @@ class ApiService {
       request.fields['lat'] = lat.toString();
       request.fields['lng'] = lng.toString();
       
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          imageFile.path,
-        ),
-      );
+      if (kIsWeb) {
+        // Web: Read bytes from blob/url
+        final res = await http.get(Uri.parse(imagePath));
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'image',
+            res.bodyBytes,
+            filename: 'upload.jpg',
+            contentType: MediaType('image', 'jpeg'),
+          ),
+        );
+      } else {
+        // Mobile/Desktop: Use file path
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            imagePath,
+            contentType: MediaType('image', 'jpeg'),
+          ),
+        );
+      }
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return DiagnosisResponse.fromJson(data);
       } else {
         print("Upload failed: ${response.statusCode} - ${response.body}");
-        return null; // Handle error appropriately in UI
+        return null;
       }
     } catch (e) {
       print("Upload error: $e");
@@ -93,6 +116,31 @@ class ApiService {
     } catch (e) {
       print("Calendar error: $e");
       return null;
+    }
+  }
+
+  // --- STORES ---
+  static Future<List<NearbyStore>> fetchNearbyStores(double lat, double lng) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/stores'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "lat": lat,
+          "lng": lng,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => NearbyStore.fromJson(json)).toList();
+      } else {
+        print("Store fetch failed: ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("Store fetch error: $e");
+      return [];
     }
   }
 }

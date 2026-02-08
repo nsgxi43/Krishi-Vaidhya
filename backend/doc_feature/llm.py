@@ -11,7 +11,7 @@ import base64
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-MODEL_NAME = "gemini-2.0-flash-lite-preview-09-2025"  # Lighter model to avoid 429
+MODEL_NAME = "gemini-flash-lite-latest"  # Usually maps to 1.5 Flash Lite, stable
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent"
 MIN_CONFIDENCE = 0.60
 
@@ -76,46 +76,63 @@ def analyze_image_with_gemini(image_path: str) -> dict:
 
         # RETRY LOGIC for 429 Errors
         max_retries = 3
+        last_error = "Unknown Error"
+        
         for attempt in range(max_retries):
             try:
                 response = requests.post(
                     f"{API_URL}?key={GEMINI_API_KEY}",
                     headers={"Content-Type": "application/json"},
                     data=json.dumps(payload),
-                    timeout=60
+                    timeout=30 # Reduced timeout
                 )
-                response.raise_for_status()
-                break # Success!
-            except requests.exceptions.HTTPError as e:
-                if response.status_code == 429 and attempt < max_retries - 1:
-                    wait_time = 2 ** attempt # 1s, 2s, 4s
+                
+                if response.status_code == 429:
+                    wait_time = 2 ** (attempt + 2) # 4s, 8s, 16s
                     print(f"Rate limited (429). Retrying in {wait_time}s...")
                     time.sleep(wait_time)
+                    last_error = "Rate Limit Exceeded (429)"
                     continue
-                else:
-                    raise e
-
-        raw = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-        return _extract_json(raw)
+                
+                response.raise_for_status()
+                raw = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+                return _extract_json(raw)
+                
+            except Exception as e:
+                last_error = str(e)
+                if isinstance(e, requests.exceptions.HTTPError) and response.status_code == 429:
+                    continue # Handled above
+                raise e
 
     except Exception as e:
         import traceback
+        error_msg = str(e)
+        if "429" in error_msg or "Rate Limit" in last_error:
+            display_error = "Rate Limit Reached"
+            explanation = "Your Gemini API Key has reached its quota limit (429). Please wait a few minutes or check your AI Studio usage."
+        elif "404" in error_msg:
+            display_error = "Model Not Found"
+            explanation = f"The model '{MODEL_NAME}' returned a 404. Identifier might be region-locked."
+        else:
+            display_error = "Analysis Failed"
+            explanation = f"Cloud AI returned an error: {error_msg}"
+
         with open("gemini_debug.log", "w") as f:
-            f.write(f"Error: {str(e)}\n")
-            f.write(traceback.format_exc())
-        print(f"Gemini Vision Error: {e}")
-        # Return fallback mock result if cloud fails
+            f.write(f"Last Error: {last_error}\nTrace: {traceback.format_exc()}")
+            
+        print(f"Gemini Analysis Error: {last_error}")
+        
         return {
             "crop": "Unknown",
-            "predicted_disease": "Analysis Failed",
+            "predicted_disease": display_error,
             "confidence": 0.0,
-            "explainability": {"method": "Error", "summary": str(e)},
+            "explainability": {"method": "Error", "summary": last_error},
             "llm": {
-                "disease_overview": "Could not analyze image.",
+                "disease_overview": explanation,
                 "why_this_prediction": "Cloud AI service unavailable.",
                 "chemical_treatments": [],
                 "organic_treatments": [],
-                "prevention_tips": []
+                "prevention_tips": ["Please check your internet and API quota."]
             }
         }
 

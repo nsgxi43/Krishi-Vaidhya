@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart'; // Ensure pubspec has url_launcher
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/language_provider.dart';
 import '../utils/translations.dart';
 import '../models/product.dart';
+import '../models/diagnosis_response.dart'; // For NearbyStore model
+import '../services/api_service.dart';
 
 class AgriStoreScreen extends StatefulWidget {
   const AgriStoreScreen({super.key});
@@ -15,8 +17,12 @@ class AgriStoreScreen extends StatefulWidget {
 class _AgriStoreScreenState extends State<AgriStoreScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  
+  // Nearby Stores Data
+  List<NearbyStore> _nearbyStores = [];
+  bool _isLoadingStores = true;
 
-  // --- MOCK DATA FOR THE STORE ---
+  // --- MOCK DATA FOR THE STORE (Existing) ---
   final List<Product> _allProducts = [
     // Fertilizers
     Product(
@@ -84,7 +90,19 @@ class _AgriStoreScreenState extends State<AgriStoreScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this); // Increased to 4
+    _fetchStores();
+  }
+
+  Future<void> _fetchStores() async {
+    // TODO: Get real location. Using Bangalore default.
+    final stores = await ApiService.fetchNearbyStores(12.9716, 77.5946);
+    if (mounted) {
+      setState(() {
+        _nearbyStores = stores;
+        _isLoadingStores = false;
+      });
+    }
   }
 
   @override
@@ -107,6 +125,14 @@ class _AgriStoreScreenState extends State<AgriStoreScreen>
     }
   }
 
+  // --- LOGIC: Launch Maps ---
+  Future<void> _launchMaps(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final langCode = Provider.of<LanguageProvider>(context).currentLocale;
@@ -122,7 +148,9 @@ class _AgriStoreScreenState extends State<AgriStoreScreen>
           labelColor: Colors.green,
           unselectedLabelColor: Colors.grey,
           indicatorColor: Colors.green,
+          isScrollable: true, // Allow scrolling for 4 tabs
           tabs: [
+            Tab(text: "Nearby Stores"), // New Tab
             Tab(text: AppTranslations.getText(langCode, 'cat_fertilizers')),
             Tab(text: AppTranslations.getText(langCode, 'cat_seeds')),
             Tab(text: AppTranslations.getText(langCode, 'cat_tools')),
@@ -132,11 +160,68 @@ class _AgriStoreScreenState extends State<AgriStoreScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
+          _buildNearbyStoresTab(), // New Tab View
           _buildProductList('fertilizers', langCode),
           _buildProductList('seeds', langCode),
           _buildProductList('tools', langCode),
         ],
       ),
+    );
+  }
+
+  Widget _buildNearbyStoresTab() {
+    if (_isLoadingStores) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_nearbyStores.isEmpty) {
+      return const Center(
+        child: Text("No nearby stores found.",
+            style: TextStyle(color: Colors.grey)),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _nearbyStores.length,
+      itemBuilder: (context, index) {
+        final store = _nearbyStores[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 3,
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(16),
+            leading: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.store, color: Colors.green),
+            ),
+            title: Text(
+              store.name,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text("${store.distanceKm} km away",
+                    style: TextStyle(color: Colors.green.shade700)),
+                const SizedBox(height: 2),
+                Text(store.address, maxLines: 2, overflow: TextOverflow.ellipsis),
+              ],
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.directions, color: Colors.blue),
+              onPressed: () => _launchMaps(store.mapsUrl),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -157,7 +242,7 @@ class _AgriStoreScreenState extends State<AgriStoreScreen>
             padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
-                // Product Icon (Using Placeholder Icon since we don't have real images yet)
+                // Product Icon
                 Container(
                   width: 70,
                   height: 70,

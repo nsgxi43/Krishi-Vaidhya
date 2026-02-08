@@ -1,49 +1,28 @@
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/language_provider.dart';
 import '../utils/translations.dart';
+import '../models/diagnosis_response.dart';
 import 'home_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final String imagePath;
-  final List<dynamic> predictions;
+  final DiagnosisResponse response;
 
   const ResultScreen({
     super.key,
     required this.imagePath,
-    required this.predictions,
+    required this.response,
   });
 
   @override
   Widget build(BuildContext context) {
     final langCode = Provider.of<LanguageProvider>(context).currentLocale;
-
-    // 1. Parse AI Output
-    final topResult = predictions.isNotEmpty ? predictions[0] : null;
-    final String rawLabel = topResult != null ? topResult['label'] : "Unknown";
-
-    // Format Label (e.g., "Tomato___Early_blight" -> "Tomato Early Blight")
-    final String displayLabel = rawLabel.replaceAll('_', ' ');
-
-    final String confidence = topResult != null
-        ? (topResult['confidence'] * 100).toStringAsFixed(1)
-        : "0";
-
-    // 2. Determine Health Status
-    final bool isHealthy = rawLabel.toLowerCase().contains("healthy");
+    final bool isHealthy = response.isHealthy;
     final Color statusColor = isHealthy ? Colors.green : Colors.red;
-
-    // 3. Fetch Remedy Logic
-    // We construct a key like 'treat_Tomato___Early_blight' to look up the dictionary
-    String remedyKey = 'treat_$rawLabel';
-    String remedyText = AppTranslations.getText(langCode, remedyKey);
-
-    // If exact remedy isn't found in dictionary, show generic message
-    if (remedyText == remedyKey) {
-      remedyText = AppTranslations.getText(langCode, 'treat_unknown');
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -70,7 +49,7 @@ class ResultScreen extends StatelessWidget {
                 image: DecorationImage(
                   image: kIsWeb
                       ? NetworkImage(imagePath)
-                      : FileImage(File(imagePath)) as ImageProvider,
+                      : FileImage(io.File(imagePath)) as ImageProvider,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -96,10 +75,7 @@ class ResultScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              AppTranslations.getText(
-                                langCode,
-                                'detected_issue',
-                              ),
+                              AppTranslations.getText(langCode, 'detected_issue'),
                               style: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 14,
@@ -107,7 +83,7 @@ class ResultScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              displayLabel,
+                              response.displayLabel,
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -132,7 +108,7 @@ class ResultScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             Text(
-                              "$confidence%",
+                              "${(response.confidence * 100).toStringAsFixed(1)}%",
                               style: TextStyle(
                                 color: statusColor,
                                 fontWeight: FontWeight.bold,
@@ -155,6 +131,37 @@ class ResultScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   const Divider(),
                   const SizedBox(height: 24),
+
+                  // --- AI Explanation (LLM) ---
+                  if (response.llm != null) ...[
+                    Text(
+                      "AI Analysis",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle("Analysis", Icons.analytics),
+                          Text(response.llm!.whyThisPrediction),
+                          const SizedBox(height: 12),
+                          _buildSectionTitle("Overview", Icons.info),
+                          Text(response.llm!.diseaseOverview),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
 
                   // --- Remedy Section ---
                   Text(
@@ -205,30 +212,56 @@ class ResultScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.medical_services,
-                                color: Colors.red,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                AppTranslations.getText(
-                                  langCode,
-                                  'chemical_control',
-                                ),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                          // Dynamic Remedies from LLM
+                          if (response.llm != null &&
+                              response.llm!.chemicalTreatments.isNotEmpty) ...[
+                            _buildSectionTitle(
+                              AppTranslations.getText(langCode, 'chemical_control'),
+                              Icons.science,
+                              color: Colors.red,
+                            ),
+                            ...response.llm!.chemicalTreatments
+                                .map((t) => _buildBulletPoint(t)),
+                            const SizedBox(height: 16),
+                          ],
+
+                          if (response.llm != null &&
+                              response.llm!.organicTreatments.isNotEmpty) ...[
+                            _buildSectionTitle(
+                              AppTranslations.getText(langCode, 'treatment_header'), // Organic
+                              Icons.eco,
+                              color: Colors.green,
+                            ),
+                            ...response.llm!.organicTreatments
+                                .map((t) => _buildBulletPoint(t)),
+                            const SizedBox(height: 16),
+                          ],
+
+                          // Fallback to dictionary if LLM is missing or empty
+                          if (response.llm == null) ...[
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.medical_services,
                                   color: Colors.red,
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            remedyText, // <--- The dynamic translated remedy
-                            style: const TextStyle(fontSize: 16, height: 1.5),
-                          ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  AppTranslations.getText(langCode, 'remedy'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _getFallbackRemedy(response.predictedDisease, langCode),
+                              style: const TextStyle(fontSize: 16, height: 1.5),
+                            ),
+                          ],
+                          
                           const SizedBox(height: 12),
                           Text(
                             AppTranslations.getText(langCode, 'consult_expert'),
@@ -242,7 +275,86 @@ class ResultScreen extends StatelessWidget {
                       ),
                     ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
+
+                  // --- Nearby Stores (NEW) ---
+                  if (response.nearbyStores.isNotEmpty) ...[
+                    Text(
+                      "Nearby Agri Stores",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 140,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: response.nearbyStores.length,
+                        itemBuilder: (context, index) {
+                          final store = response.nearbyStores[index];
+                          return Container(
+                            width: 200,
+                            margin: const EdgeInsets.only(right: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade200),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                )
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  store.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "${store.distanceKm} km away",
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.green),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  store.address,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 10, color: Colors.grey),
+                                ),
+                                const Spacer(),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 30,
+                                  child: ElevatedButton(
+                                    onPressed: () => _launchMaps(store.mapsUrl),
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blue,
+                                        padding: EdgeInsets.zero),
+                                    child: const Text("Get Directions",
+                                        style: TextStyle(fontSize: 10)),
+                                  ),
+                                )
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
 
                   // --- Action Buttons ---
                   SizedBox(
@@ -281,5 +393,54 @@ class ResultScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon, {Color color = Colors.black87}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: color,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBulletPoint(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0, left: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("• ", style: TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchMaps(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  String _getFallbackRemedy(String label, String langCode) {
+    String remedyKey = 'treat_$label';
+    String remedyText = AppTranslations.getText(langCode, remedyKey);
+    if (remedyText == remedyKey) {
+      return AppTranslations.getText(langCode, 'treat_unknown');
+    }
+    return remedyText;
   }
 }

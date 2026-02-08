@@ -4,14 +4,14 @@ import os
 import datetime
 from dotenv import load_dotenv
 
+# Load env vars immediately
+load_dotenv()
+
 # Import our services
 from db import users_service, diagnosis_service, calendar_db_service
 from agri_calendar import calendar_service, scheduler, reminder_service
 from doc_feature import pipeline
 from location import location_service
-
-# Load env vars
-load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -107,7 +107,27 @@ def get_calendar(calendar_id):
     # Check for weather updates/rescheduling
     weather_update, _ = scheduler.auto_reschedule_calendar(calendar)
     
+    
     return jsonify(weather_update)
+
+# --- STORE ROUTES ---
+@app.route('/api/stores', methods=['POST'])
+def get_stores():
+    data = request.json
+    lat = data.get('lat')
+    lng = data.get('lng')
+    
+    if not lat or not lng:
+        return jsonify({"error": "Location required"}), 400
+        
+    try:
+        from doc_feature import agri_store_service
+        # Normalize
+        location = location_service.normalize_location(lat, lng)
+        stores = agri_store_service.get_nearby_agri_stores(location, radius_km=10)
+        return jsonify(stores)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
