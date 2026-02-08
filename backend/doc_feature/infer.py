@@ -5,13 +5,22 @@ Responsible ONLY for image classification.
 """
 
 import os
-import numpy as np
-import cv2
 import pickle
+
+# --- OPTIONAL MOCK FOR DEPENDENCIES ---
+try:
+    import numpy as np  # type: ignore
+    import cv2  # type: ignore
+    CV2_AVAILABLE = True
+except ImportError as e:
+    print(f"Computer Vision modules not found: {e}. Inference will be MOCKED.")
+    CV2_AVAILABLE = False
+    np = None
+    cv2 = None
 
 # --- OPTIONAL MOCK FOR TENSORFLOW ---
 try:
-    import tensorflow as tf
+    import tensorflow as tf  # type: ignore
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
@@ -27,7 +36,7 @@ CONFIDENCE_THRESHOLD = 0.50
 CONFIDENCE_GAP_THRESHOLD = 0.20
 
 # Load once
-if TF_AVAILABLE:
+if TF_AVAILABLE and CV2_AVAILABLE:
     try:
         model = tf.keras.models.load_model(MODEL_PATH)
     except Exception as e:
@@ -45,6 +54,9 @@ except Exception as e:
     idx_to_class = {}
 
 def _preprocess(image_path: str):
+    if not CV2_AVAILABLE:
+        raise ImportError("OpenCV not available")
+        
     img = cv2.imread(image_path)
     if img is None:
         raise FileNotFoundError(f"Image not found: {image_path}")
@@ -56,9 +68,9 @@ def _preprocess(image_path: str):
 
 
 def run_inference(image_path: str) -> dict:
-    if not TF_AVAILABLE or model is None:
+    if not TF_AVAILABLE or not CV2_AVAILABLE or model is None:
         # RETURN MOCK RESULT
-        print("Returning MOCK inference result")
+        print("Returning MOCK inference result (Missing Deps/Model)")
         return {
             "crop": "MockCrop",
             "predicted_disease": "MockCrop___Healthy",

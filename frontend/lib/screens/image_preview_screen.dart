@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
@@ -88,7 +89,11 @@ class ImagePreviewScreen extends StatelessWidget {
       body: Column(
         children: [
           // 1. The Image Preview
-          Expanded(child: Image.file(File(imagePath), fit: BoxFit.contain)),
+          Expanded(
+            child: kIsWeb
+                ? Image.network(imagePath, fit: BoxFit.contain)
+                : Image.file(File(imagePath), fit: BoxFit.contain),
+          ),
 
           // 2. Validation Area (White Box)
           Container(

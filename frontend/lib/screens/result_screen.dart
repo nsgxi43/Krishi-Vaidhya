@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
@@ -67,7 +68,9 @@ class ResultScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.black12,
                 image: DecorationImage(
-                  image: FileImage(File(imagePath)),
+                  image: kIsWeb
+                      ? NetworkImage(imagePath)
+                      : FileImage(File(imagePath)) as ImageProvider,
                   fit: BoxFit.cover,
                 ),
               ),

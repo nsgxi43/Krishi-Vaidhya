@@ -1,9 +1,13 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'package:http/http.dart' as http;
 import 'package:flutter_tflite/flutter_tflite.dart';
 
 class AiService {
   
   // 1. Load the Model (Brain)
   static Future<void> loadModel() async {
+    if (kIsWeb) return; // Skip TFLite on Web
     try {
       String? res = await Tflite.loadModel(
         model: "assets/model/model.tflite",
@@ -21,15 +25,55 @@ class AiService {
   // 2. Run Analysis on Image
   static Future<List<dynamic>?> classifyImage(String imagePath) async {
     try {
-      var recognitions = await Tflite.runModelOnImage(
-        path: imagePath,
-        imageMean: 0.0,   // Defaults for standard models
-        imageStd: 255.0,  // Defaults for standard models
-        numResults: 2,    // Return top 2 results
-        threshold: 0.2,   // Confidence threshold (20%)
-        asynch: true,
-      );
-      return recognitions;
+      if (kIsWeb) {
+        // --- WEB IMPLEMENTATION (Use Backend API) ---
+        // 1. Get bytes from blob URL
+        final response = await http.get(Uri.parse(imagePath));
+        if (response.statusCode != 200) throw Exception("Failed to read blob");
+        
+        // 2. Upload to Backend
+        var request = http.MultipartRequest(
+          'POST', 
+          Uri.parse('http://127.0.0.1:5000/api/diagnosis')
+        );
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'image', 
+            response.bodyBytes, 
+            filename: 'upload.jpg'
+          )
+        );
+        request.fields['userId'] = 'web_user'; // Dummy ID for guest
+
+        final streamedResponse = await request.send();
+        final serverResponse = await http.Response.fromStream(streamedResponse);
+
+        if (serverResponse.statusCode == 200) {
+          final data = json.decode(serverResponse.body);
+          // 3. Convert Backend Format to UI Format
+          return [
+            {
+              "label": data['predicted_disease'] ?? "Unknown",
+              "confidence": data['confidence'] ?? 0.0,
+            }
+          ];
+        } else {
+          print("Backend Error: ${serverResponse.body}");
+          return null;
+        }
+
+      } else {
+        // --- MOBILE IMPLEMENTATION (TFLite) ---
+        var recognitions = await Tflite.runModelOnImage(
+          path: imagePath,
+          imageMean: 0.0,   // Defaults for standard models
+          imageStd: 255.0,  // Defaults for standard models
+          numResults: 2,    // Return top 2 results
+          threshold: 0.2,   // Confidence threshold (20%)
+          asynch: true,
+        );
+        return recognitions;
+      }
     } catch (e) {
       print("Error analyzing image: $e");
       return null;
@@ -38,6 +82,6 @@ class AiService {
 
   // 3. Clean up memory
   static void dispose() {
-    Tflite.close();
+    if (!kIsWeb) Tflite.close();
   }
 }

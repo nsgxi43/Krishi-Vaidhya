@@ -4,21 +4,32 @@ Grad-CAM explainability module.
 NO printing. NO model loading here.
 """
 
-import numpy as np
-import cv2
+# --- OPTIONAL MOCK FOR DEPENDENCIES ---
+try:
+    import numpy as np  # type: ignore
+    import cv2  # type: ignore
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    np = None
+    cv2 = None
 
 # --- OPTIONAL MOCK FOR TENSORFLOW ---
 try:
-    import tensorflow as tf
+    import tensorflow as tf  # type: ignore
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
+
 
 IMG_SIZE = 224
 LAST_CONV_LAYER = "Conv_1"
 
 
 def _preprocess(image_path: str):
+    if not CV2_AVAILABLE:
+        raise ImportError("OpenCV not available")
+
     img = cv2.imread(image_path)
     if img is None:
         raise FileNotFoundError(f"Image not found: {image_path}")
@@ -30,7 +41,7 @@ def _preprocess(image_path: str):
 
 
 def compute_gradcam(image_tensor, model):
-    if not TF_AVAILABLE:
+    if not TF_AVAILABLE or model is None:
         # Return dummy heatmap
         return np.zeros((IMG_SIZE, IMG_SIZE))
 
