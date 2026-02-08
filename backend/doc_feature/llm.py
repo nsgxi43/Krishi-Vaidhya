@@ -11,7 +11,7 @@ import base64
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-MODEL_NAME = "gemini-1.5-flash"  # Changed to 1.5 Flash for vision
+MODEL_NAME = "gemini-1.5-flash"  # Verified working model
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent"
 MIN_CONFIDENCE = 0.60
 
@@ -85,6 +85,10 @@ def analyze_image_with_gemini(image_path: str) -> dict:
         return _extract_json(raw)
 
     except Exception as e:
+        import traceback
+        with open("gemini_debug.log", "w") as f:
+            f.write(f"Error: {str(e)}\n")
+            f.write(traceback.format_exc())
         print(f"Gemini Vision Error: {e}")
         # Return fallback mock result if cloud fails
         return {
