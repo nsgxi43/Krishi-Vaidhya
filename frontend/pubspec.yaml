@@ -33,6 +33,9 @@ dependencies:
   # --- Phone & Urls ---
   url_launcher: ^6.2.1
 
+  # HTTP client for REST calls
+  http: ^0.13.6
+
   # --- Hardware Sensors ---
   environment_sensors: ^0.3.0
   sensors_plus: ^5.0.1
