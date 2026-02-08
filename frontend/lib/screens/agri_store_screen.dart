@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
 import '../providers/language_provider.dart';
 import '../utils/translations.dart';
 import '../models/product.dart';
@@ -21,6 +23,7 @@ class _AgriStoreScreenState extends State<AgriStoreScreen>
   // Nearby Stores Data
   List<NearbyStore> _nearbyStores = [];
   bool _isLoadingStores = true;
+  String? _locationError;
 
   // --- MOCK DATA FOR THE STORE (Existing) ---
   final List<Product> _allProducts = [
@@ -90,19 +93,78 @@ class _AgriStoreScreenState extends State<AgriStoreScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this); // Increased to 4
-    _fetchStores();
+    _tabController = TabController(length: 4, vsync: this); 
+    _initLocationAndFetchStores();
   }
 
-  Future<void> _fetchStores() async {
-    // TODO: Get real location. Using Bangalore default.
-    final stores = await ApiService.fetchNearbyStores(12.9716, 77.5946);
-    if (mounted) {
-      setState(() {
-        _nearbyStores = stores;
-        _isLoadingStores = false;
-      });
+  Future<void> _initLocationAndFetchStores() async {
+    setState(() {
+      _isLoadingStores = true;
+      _locationError = null;
+    });
+
+    try {
+      Position position = await _determinePosition();
+      final stores = await ApiService.fetchNearbyStores(position.latitude, position.longitude);
+      
+      if (mounted) {
+        setState(() {
+          _nearbyStores = stores;
+          _isLoadingStores = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Location error, using fallback: $e");
+      // FALLBACK: Use Bangalore coordinates if GPS fails
+      final stores = await ApiService.fetchNearbyStores(12.9716, 77.5946);
+      
+      if (mounted) {
+        setState(() {
+          _nearbyStores = stores;
+          _isLoadingStores = false;
+          _locationError = "Could not get your precise location. Showing results for Bangalore (Default).";
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Using default location: GPS access failed.")),
+        );
+      }
     }
+  }
+
+  Future<Position> _determinePosition() async {
+    // NOTE: Many geolocator methods throw MissingPluginException on Web 
+    // if not served over HTTPS or if the plugin isn't fully registered.
+    if (kIsWeb) {
+      try {
+        // On web, often we can just call getCurrentPosition and the browser handles the prompt.
+        return await Geolocator.getCurrentPosition();
+      } catch (e) {
+        return Future.error('Location error: $e. Try refreshing or ensuring you are on a secure (HTTPS) connection.');
+      }
+    }
+
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error('Location permissions are permanently denied.');
+    } 
+
+    return await Geolocator.getCurrentPosition();
   }
 
   @override
@@ -143,14 +205,20 @@ class _AgriStoreScreenState extends State<AgriStoreScreen>
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _initLocationAndFetchStores,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.green,
           unselectedLabelColor: Colors.grey,
           indicatorColor: Colors.green,
-          isScrollable: true, // Allow scrolling for 4 tabs
+          isScrollable: true, 
           tabs: [
-            Tab(text: "Nearby Stores"), // New Tab
+            Tab(text: "Nearby Stores"), 
             Tab(text: AppTranslations.getText(langCode, 'cat_fertilizers')),
             Tab(text: AppTranslations.getText(langCode, 'cat_seeds')),
             Tab(text: AppTranslations.getText(langCode, 'cat_tools')),
@@ -160,7 +228,7 @@ class _AgriStoreScreenState extends State<AgriStoreScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildNearbyStoresTab(), // New Tab View
+          _buildNearbyStoresTab(), 
           _buildProductList('fertilizers', langCode),
           _buildProductList('seeds', langCode),
           _buildProductList('tools', langCode),
@@ -174,54 +242,83 @@ class _AgriStoreScreenState extends State<AgriStoreScreen>
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_nearbyStores.isEmpty) {
-      return const Center(
-        child: Text("No nearby stores found.",
-            style: TextStyle(color: Colors.grey)),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _nearbyStores.length,
-      itemBuilder: (context, index) {
-        final store = _nearbyStores[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 3,
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.store, color: Colors.green),
-            ),
-            title: Text(
-              store.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      children: [
+        if (_locationError != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Colors.orange.withOpacity(0.1),
+            child: Row(
               children: [
-                const SizedBox(height: 4),
-                Text("${store.distanceKm} km away",
-                    style: TextStyle(color: Colors.green.shade700)),
-                const SizedBox(height: 2),
-                Text(store.address, maxLines: 2, overflow: TextOverflow.ellipsis),
+                const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _locationError!,
+                    style: const TextStyle(fontSize: 12, color: Colors.orange),
+                  ),
+                ),
+                TextButton(
+                  onPressed: _initLocationAndFetchStores,
+                  child: const Text("Retry GPS", style: TextStyle(fontSize: 12)),
+                ),
               ],
             ),
-            trailing: IconButton(
-              icon: const Icon(Icons.directions, color: Colors.blue),
-              onPressed: () => _launchMaps(store.mapsUrl),
-            ),
           ),
-        );
-      },
+        Expanded(
+          child: _nearbyStores.isEmpty
+              ? const Center(
+                  child: Text("No nearby stores found.",
+                      style: TextStyle(color: Colors.grey)),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _nearbyStores.length,
+                  itemBuilder: (context, index) {
+                    final store = _nearbyStores[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      elevation: 3,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        leading: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.store, color: Colors.green),
+                        ),
+                        title: Text(
+                          store.name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text("${store.distanceKm} km away",
+                                style: TextStyle(color: Colors.green.shade700)),
+                            const SizedBox(height: 2),
+                            Text(store.address,
+                                maxLines: 2, overflow: TextOverflow.ellipsis),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.directions, color: Colors.blue),
+                          onPressed: () => _launchMaps(store.mapsUrl),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 

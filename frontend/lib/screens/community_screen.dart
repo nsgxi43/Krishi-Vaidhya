@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
+import '../providers/user_provider.dart';
 import '../utils/translations.dart';
-import '../models/post.dart';
+import '../models/community_post.dart';
+import '../services/community_service.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -12,49 +14,42 @@ class CommunityScreen extends StatefulWidget {
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
-  // --- MOCK DATA: Simulating a live feed ---
-  final List<Post> _posts = [
-    Post(
-      id: '1',
-      authorName: 'Ramesh Singh',
-      timeAgo: '2 hrs ago',
-      content: 'My tomato leaves are turning yellow at the bottom. Is this nitrogen deficiency or blight?',
-      likes: 12,
-      comments: 4,
-    ),
-    Post(
-      id: '2',
-      authorName: 'Anitha K.',
-      timeAgo: '5 hrs ago',
-      content: 'Found a great price for Urea at the local mandi today! ₹260 per bag.',
-      likes: 25,
-      comments: 8,
-      isLiked: true, // Already liked example
-    ),
-    Post(
-      id: '3',
-      authorName: 'Gurpreet Singh',
-      timeAgo: '1 day ago',
-      content: 'Has anyone tried the new wheat variety HD-3086? How is the yield?',
-      likes: 8,
-      comments: 2,
-    ),
-  ];
+  List<CommunityPost> _posts = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPosts();
+  }
+
+  Future<void> _fetchPosts() async {
+    setState(() => _isLoading = true);
+    final posts = await CommunityService.getPosts();
+    setState(() {
+      _posts = posts;
+      _isLoading = false;
+    });
+  }
 
   // Logic to add a new post
-  void _addNewPost(String text) {
+  Future<void> _addNewPost(String text) async {
     if (text.isEmpty) return;
-    setState(() {
-      _posts.insert(0, Post(
-        id: DateTime.now().toString(),
-        authorName: 'You', // In a real app, use UserProvider.name
-        timeAgo: 'Just now',
-        content: text,
-        likes: 0,
-        comments: 0,
-      ));
-    });
-    Navigator.pop(context); // Close the dialog
+    
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userId = userProvider.phone;
+    
+    // In a real scenario, we'd get actual lat/lng
+    final success = await CommunityService.createPost(userId, text, 0.0, 0.0);
+    
+    if (success) {
+      _fetchPosts();
+      Navigator.pop(context); // Close the dialog
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to create post")),
+      );
+    }
   }
 
   // Dialog to write a post
@@ -90,6 +85,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   Widget build(BuildContext context) {
     final langCode = Provider.of<LanguageProvider>(context).currentLocale;
+    final userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -97,79 +93,100 @@ class _CommunityScreenState extends State<CommunityScreen> {
         title: Text(AppTranslations.getText(langCode, 'community_title')),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchPosts,
+          )
+        ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: _posts.length,
-        itemBuilder: (context, index) {
-          final post = _posts[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header: Author & Time
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.teal.shade100,
-                        child: Text(post.authorName[0], style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _fetchPosts,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: _posts.length,
+                itemBuilder: (context, index) {
+                  final post = _posts[index];
+                  final isLiked = post.likedBy.contains(userProvider.phone);
+                  
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(post.authorName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text(post.timeAgo, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                          // Header: Author & Time
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: Colors.teal.shade100,
+                                child: Text(
+                                  post.userId.isNotEmpty ? post.userId[0] : 'U', 
+                                  style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(post.userId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  Text(
+                                    "${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year}", 
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12)
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          
+                          // Content
+                          Text(post.content, style: const TextStyle(fontSize: 16)),
+                          const SizedBox(height: 16),
+                          const Divider(),
+
+                          // Actions: Like, Comment, Share
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildActionButton(
+                                icon: isLiked ? Icons.favorite : Icons.favorite_border,
+                                color: isLiked ? Colors.red : Colors.grey,
+                                label: "${post.likes} ${AppTranslations.getText(langCode, 'like')}",
+                                onTap: () async {
+                                  final success = await CommunityService.likePost(post.id, userProvider.phone);
+                                  if (success) {
+                                    _fetchPosts();
+                                  }
+                                },
+                              ),
+                              _buildActionButton(
+                                icon: Icons.comment_outlined,
+                                color: Colors.grey,
+                                label: "${post.commentsCount} ${AppTranslations.getText(langCode, 'comment')}",
+                                onTap: () {
+                                  // Navigate to details screen (to be implemented)
+                                },
+                              ),
+                              _buildActionButton(
+                                icon: Icons.share_outlined,
+                                color: Colors.grey,
+                                label: AppTranslations.getText(langCode, 'share'),
+                                onTap: () {}, 
+                              ),
+                            ],
+                          )
                         ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Content
-                  Text(post.content, style: const TextStyle(fontSize: 16)),
-                  const SizedBox(height: 16),
-                  const Divider(),
-
-                  // Actions: Like, Comment, Share
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildActionButton(
-                        icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
-                        color: post.isLiked ? Colors.red : Colors.grey,
-                        label: "${post.likes} ${AppTranslations.getText(langCode, 'like')}",
-                        onTap: () {
-                          setState(() {
-                            post.isLiked = !post.isLiked;
-                            post.isLiked ? post.likes++ : post.likes--;
-                          });
-                        },
-                      ),
-                      _buildActionButton(
-                        icon: Icons.comment_outlined,
-                        color: Colors.grey,
-                        label: "${post.comments} ${AppTranslations.getText(langCode, 'comment')}",
-                        onTap: () {}, // Pending feature
-                      ),
-                      _buildActionButton(
-                        icon: Icons.share_outlined,
-                        color: Colors.grey,
-                        label: AppTranslations.getText(langCode, 'share'),
-                        onTap: () {}, // Pending feature
-                      ),
-                    ],
-                  )
-                ],
+                    ),
+                  );
+                },
               ),
             ),
-          );
-        },
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showPostDialog(langCode),
         backgroundColor: Colors.teal,

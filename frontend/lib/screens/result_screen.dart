@@ -7,6 +7,7 @@ import '../providers/language_provider.dart';
 import '../utils/translations.dart';
 import '../models/diagnosis_response.dart';
 import 'home_screen.dart';
+import 'agri_store_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final String imagePath;
@@ -357,34 +358,69 @@ class ResultScreen extends StatelessWidget {
                   ],
 
                   // --- Action Buttons ---
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Reset everything and go Home
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
+                  Column(
+                    children: [
+                      // Find Medicines Nearby
+                      if (!isHealthy) ...[
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AgriStoreScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.shopping_cart, color: Colors.white),
+                            label: const Text(
+                              "Find Medicines Nearby",
+                              style: TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                           ),
-                          (route) => false,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4CAF50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // Back to Home
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Reset everything and go Home
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const HomeScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF4CAF50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            AppTranslations.getText(langCode, 'home'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                            ),
+                          ),
                         ),
                       ),
-                      child: Text(
-                        AppTranslations.getText(langCode, 'home'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
                 ],
               ),
