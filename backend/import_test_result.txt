@@ -1,4 +1,4 @@
 Testing imports...
-Firebase Admin import failed: The requests library is not installed from please install the requests package to use the requests transport.
-google.auth.transport.requests failed: The requests library is not installed from please install the requests package to use the requests transport.
-requests failed: cannot import name 'timegm' from 'calendar' (consider renaming 'E:\\sem6\\Krishi-Vaidhya-main\\Krishi-Vaidhya-main\\backend\\calendar\\__init__.py' since it has the same name as the standard library module named 'calendar' and prevents importing that standard library module)
+Firebase Admin imported successfully
+google.auth.transport.requests imported successfully
+requests version: 2.32.5

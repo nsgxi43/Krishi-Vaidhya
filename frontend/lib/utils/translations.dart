@@ -17,6 +17,7 @@ class AppTranslations {
       'select_language': 'Select Language',
       'save': 'Save',
       'change_number': 'Change Number',
+      'camera_unavailable': 'Camera Unavailable', // Added key
 
       // Home Screen
       'sunny': 'Sunny',
@@ -192,6 +193,7 @@ class AppTranslations {
       'select_language': 'भाषा चुनें',
       'save': 'सहेजें',
       'change_number': 'नंबर बदलें',
+      'camera_unavailable': 'कैमरा उपलब्ध नहीं है', // Added key
 
       'sunny': 'धूप',
       'selected_crops': 'चयनित फसलें',
@@ -355,6 +357,7 @@ class AppTranslations {
       'select_language': 'மொழியைத் தேர்ந்தெடுக்கவும்',
       'save': 'சேமி',
       'change_number': 'எண்ணை மாற்றவும்',
+      'camera_unavailable': 'கேமரா கிடைக்கவில்லை', // Added key
 
       'sunny': 'வெயில்',
       'selected_crops': 'தேர்ந்தெடுக்கப்பட்ட பயிர்கள்',
@@ -512,6 +515,7 @@ class AppTranslations {
       'select_language': 'భాషను ఎంచుకోండి',
       'save': 'సేవ్',
       'change_number': 'సంఖ్య మార్చండి',
+      'camera_unavailable': 'కెమెరా అందుబాటులో లేదు', // Added key
 
       'sunny': 'ఎండ',
       'selected_crops': 'ఎంచుకున్న పంటలు',

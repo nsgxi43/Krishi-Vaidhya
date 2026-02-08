@@ -16,7 +16,8 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   CameraController? _controller;
   bool _isCameraInitialized = false;
-  final ImagePicker _picker = ImagePicker(); // Instance of Image Picker
+  bool _isLoading = true; // Added loading state
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -25,14 +26,19 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _initCamera() async {
-    final cameras = await availableCameras();
-    if (cameras.isEmpty) return;
-
-    // Use high resolution for better AI detection
-    _controller = CameraController(cameras[0], ResolutionPreset.high);
-    await _controller!.initialize();
-
-    if (mounted) setState(() => _isCameraInitialized = true);
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isNotEmpty) {
+        // Use high resolution for better AI detection
+        _controller = CameraController(cameras[0], ResolutionPreset.high);
+        await _controller!.initialize();
+        if (mounted) setState(() => _isCameraInitialized = true);
+      }
+    } catch (e) {
+      debugPrint("Camera initialization failed: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -43,7 +49,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   // LOGIC: Take Photo from Camera
   Future<void> _takePicture() async {
-    if (!_isCameraInitialized) return;
+    if (!_isCameraInitialized || _controller == null) return;
     try {
       final image = await _controller!.takePicture();
       if (mounted) _goToPreview(image.path);
@@ -74,7 +80,7 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget build(BuildContext context) {
     final langCode = Provider.of<LanguageProvider>(context).currentLocale;
 
-    if (!_isCameraInitialized) {
+    if (_isLoading) {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator()),
@@ -85,8 +91,24 @@ class _CameraScreenState extends State<CameraScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 1. Camera Preview
-          Center(child: CameraPreview(_controller!)),
+          // 1. Camera Preview or Placeholder
+          Center(
+            child: _isCameraInitialized && _controller != null
+                ? CameraPreview(_controller!)
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.camera_alt_outlined,
+                          size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(
+                        AppTranslations.getText(langCode, 'camera_unavailable') ??
+                            "Camera Unavailble",
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+          ),
 
           // 2. Guide Overlay (Visual aid for focus)
           Center(
