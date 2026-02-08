@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import our services
-from db import users_service, diagnosis_service, calendar_db_service
+from db import users_service, diagnosis_service, calendar_db_service, community_service
 from agri_calendar import calendar_service, scheduler, reminder_service
 from doc_feature import pipeline
 from location import location_service
@@ -128,6 +128,50 @@ def get_stores():
         return jsonify(stores)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# --- COMMUNITY ROUTES ---
+@app.route('/api/community/posts', methods=['POST'])
+def create_community_post():
+    data = request.json
+    user_id = data.get('userId')
+    content = data.get('content')
+    lat = float(data.get('lat', 0.0))
+    lng = float(data.get('lng', 0.0))
+    
+    if not user_id or not content:
+        return jsonify({"error": "User ID and content required"}), 400
+        
+    post_id = community_service.create_post(user_id, content, lat, lng)
+    return jsonify({"postId": post_id, "status": "success"})
+
+@app.route('/api/community/posts', methods=['GET'])
+def get_community_posts():
+    limit = int(request.args.get('limit', 20))
+    posts = community_service.get_posts(limit)
+    return jsonify(posts)
+
+@app.route('/api/community/posts/<post_id>/comment', methods=['POST'])
+def add_community_comment(post_id):
+    data = request.json
+    user_id = data.get('userId')
+    content = data.get('content')
+    
+    if not user_id or not content:
+        return jsonify({"error": "User ID and content required"}), 400
+        
+    community_service.add_comment(post_id, user_id, content)
+    return jsonify({"status": "success"})
+
+@app.route('/api/community/posts/<post_id>/like', methods=['POST'])
+def like_community_post(post_id):
+    data = request.json
+    user_id = data.get('userId')
+    
+    if not user_id:
+        return jsonify({"error": "User ID required"}), 400
+        
+    community_service.like_post(post_id, user_id)
+    return jsonify({"status": "success"})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

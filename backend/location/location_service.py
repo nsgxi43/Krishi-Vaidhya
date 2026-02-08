@@ -32,7 +32,10 @@ def reverse_geocode(lat: float, lng: float) -> dict:
                     {"long_name": "Mock Village", "types": ["locality"]},
                     {"long_name": "Mock District", "types": ["administrative_area_level_3"]},
                     {"long_name": "Mock State", "types": ["administrative_area_level_1"]}
-                ]
+                ],
+                "geometry": {
+                    "location": {"lat": lat, "lng": lng}
+                }
             }]
         }
 
@@ -65,9 +68,26 @@ def nearby_search(lat: float, lng: float, radius_m: int, keyword: str, place_typ
     if not GOOGLE_MAPS_KEY:
         print("Google Maps API Key not set. Returning mock places.")
         return {
+            "status": "OK",
             "results": [
-                {"name": "Mock Agri Store 1", "vicinity": "Near Farm 1", "rating": 4.5},
-                {"name": "Mock Agri Store 2", "vicinity": "Near Farm 2", "rating": 4.0}
+                {
+                    "name": "Kisan Seva Kendra", 
+                    "vicinity": "Main Market, Bangalore", 
+                    "rating": 4.5,
+                    "geometry": {"location": {"lat": lat + 0.01, "lng": lng + 0.01}}
+                },
+                {
+                    "name": "Agri-Tech Solutions", 
+                    "vicinity": "Electronic City, Bangalore", 
+                    "rating": 4.2,
+                    "geometry": {"location": {"lat": lat - 0.01, "lng": lng - 0.01}}
+                },
+                {
+                    "name": "Green Earth Fertilizers", 
+                    "vicinity": "MG Road, Bangalore", 
+                    "rating": 4.8,
+                    "geometry": {"location": {"lat": lat + 0.02, "lng": lng - 0.01}}
+                }
             ]
         }
 
