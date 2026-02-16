@@ -1,4 +1,0 @@
-Testing imports...
-Firebase Admin imported successfully
-google.auth.transport.requests imported successfully
-requests version: 2.32.5
