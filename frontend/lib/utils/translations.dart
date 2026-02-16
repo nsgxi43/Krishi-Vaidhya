@@ -151,6 +151,12 @@ class AppTranslations {
       'like': 'Like',
       'comment': 'Comment',
       'share': 'Share',
+      'share_community': 'Share to Community',
+      'sharing_result': 'Sharing Diagnosis',
+      'write_something': 'Tell the community about this...',
+      'share_success': 'Result shared successfully!',
+      'share_failed': 'Failed to share result.',
+      'cancel': 'Cancel',
 
       // --- EPIC 10: SETTINGS ---
       'settings': 'Settings',
@@ -315,6 +321,12 @@ class AppTranslations {
       'like': 'लाइक',
       'comment': 'टिप्पणी',
       'share': 'शेयर',
+      'share_community': 'समुदाय के साथ साझा करें',
+      'sharing_result': 'रोग निदान साझा कर रहे हैं',
+      'write_something': 'समुदाय को इसके बारे में बताएं...',
+      'share_success': 'रोग निदान सफलतापूर्वक साझा किया गया!',
+      'share_failed': 'साझा करने में विफल।',
+      'cancel': 'रद्द करें',
 
       // --- EPIC 10: SETTINGS ---
       'settings': 'सेटिंग्स',

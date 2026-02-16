@@ -146,6 +146,59 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           
                           // Content
                           Text(post.content, style: const TextStyle(fontSize: 16)),
+                          const SizedBox(height: 12),
+
+                          // Analysis Summary (if available)
+                          if (post.analysisData != null)
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.teal.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.teal.shade100),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.analytics_outlined, color: Colors.teal, size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "${post.analysisData!['crop']} - ${post.analysisData!['label']}",
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                        ),
+                                        Text(
+                                          "Confidence: ${(post.analysisData!['confidence'] * 100).toStringAsFixed(1)}%",
+                                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          // Image (if available)
+                          if (post.imageUrl != null) ...[
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                "${CommunityService.baseUrl.replaceAll('/api', '')}${post.imageUrl}",
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 200,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  height: 200,
+                                  color: Colors.grey.shade200,
+                                  child: const Icon(Icons.broken_image, color: Colors.grey),
+                                ),
+                              ),
+                            ),
+                          ],
+                          
                           const SizedBox(height: 16),
                           const Divider(),
 

@@ -8,6 +8,9 @@ import '../utils/translations.dart';
 import '../models/diagnosis_response.dart';
 import 'home_screen.dart';
 import 'agri_store_screen.dart';
+import '../services/community_service.dart';
+import '../providers/user_provider.dart';
+import 'remedies_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final String imagePath;
@@ -164,117 +167,8 @@ class ResultScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                   ],
 
-                  // --- Remedy Section ---
-                  Text(
-                    isHealthy
-                        ? AppTranslations.getText(langCode, 'healthy_crop')
-                        : AppTranslations.getText(langCode, 'treatment_header'),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  // Remedy summary removed - points to RemediesScreen
                   const SizedBox(height: 12),
-
-                  if (isHealthy)
-                    // Healthy Message
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.green.shade200),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.check_circle, color: Colors.green),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              AppTranslations.getText(langCode, 'healthy_msg'),
-                              style: const TextStyle(
-                                fontSize: 15,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    // Disease Treatment Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.shade200),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Dynamic Remedies from LLM
-                          if (response.llm != null &&
-                              response.llm!.chemicalTreatments.isNotEmpty) ...[
-                            _buildSectionTitle(
-                              AppTranslations.getText(langCode, 'chemical_control'),
-                              Icons.science,
-                              color: Colors.red,
-                            ),
-                            ...response.llm!.chemicalTreatments
-                                .map((t) => _buildBulletPoint(t)),
-                            const SizedBox(height: 16),
-                          ],
-
-                          if (response.llm != null &&
-                              response.llm!.organicTreatments.isNotEmpty) ...[
-                            _buildSectionTitle(
-                              AppTranslations.getText(langCode, 'treatment_header'), // Organic
-                              Icons.eco,
-                              color: Colors.green,
-                            ),
-                            ...response.llm!.organicTreatments
-                                .map((t) => _buildBulletPoint(t)),
-                            const SizedBox(height: 16),
-                          ],
-
-                          // Fallback to dictionary if LLM is missing or empty
-                          if (response.llm == null) ...[
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.medical_services,
-                                  color: Colors.red,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  AppTranslations.getText(langCode, 'remedy'),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _getFallbackRemedy(response.predictedDisease, langCode),
-                              style: const TextStyle(fontSize: 16, height: 1.5),
-                            ),
-                          ],
-                          
-                          const SizedBox(height: 12),
-                          Text(
-                            AppTranslations.getText(langCode, 'consult_expert'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade700,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
                   const SizedBox(height: 24),
 
@@ -357,46 +251,61 @@ class ResultScreen extends StatelessWidget {
                     const SizedBox(height: 40),
                   ],
 
-                  // --- Action Buttons ---
-                  Column(
-                    children: [
-                      // Find Medicines Nearby
-                      if (!isHealthy) ...[
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AgriStoreScreen(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.shopping_cart, color: Colors.white),
-                            label: const Text(
-                              "Find Medicines Nearby",
-                              style: TextStyle(color: Colors.white, fontSize: 16),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                      // Next: View Remedies Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RemediesScreen(response: response),
                               ),
+                            );
+                          },
+                          icon: const Icon(Icons.arrow_forward, color: Colors.white),
+                          label: const Text(
+                            "Next: View Remedies",
+                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                      ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Share to Community
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showShareDialog(context, langCode),
+                          icon: const Icon(Icons.share, color: Colors.teal),
+                          label: Text(
+                            AppTranslations.getText(langCode, 'share_community'),
+                            style: const TextStyle(color: Colors.teal, fontSize: 16),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.teal),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
 
                       // Back to Home
                       SizedBox(
                         width: double.infinity,
                         height: 50,
-                        child: ElevatedButton(
+                        child: TextButton(
                           onPressed: () {
-                            // Reset everything and go Home
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
@@ -405,23 +314,15 @@ class ResultScreen extends StatelessWidget {
                               (route) => false,
                             );
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4CAF50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
                           child: Text(
                             AppTranslations.getText(langCode, 'home'),
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
+                              color: Colors.grey,
+                              fontSize: 16,
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -459,6 +360,79 @@ class ResultScreen extends StatelessWidget {
         children: [
           const Text("• ", style: TextStyle(fontWeight: FontWeight.bold)),
           Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+
+  void _showShareDialog(BuildContext context, String langCode) {
+    final TextEditingController controller = TextEditingController();
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppTranslations.getText(langCode, 'share_community')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "${AppTranslations.getText(langCode, 'sharing_result')}: ${response.displayLabel}",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: AppTranslations.getText(langCode, 'write_something'),
+                border: const OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppTranslations.getText(langCode, 'cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final content = controller.text.isEmpty
+                  ? "Check out my ${response.crop} diagnosis!"
+                  : controller.text;
+
+              final success = await CommunityService.createPost(
+                userProvider.phone,
+                content,
+                0.0, // Should use real location if available
+                0.0,
+                imagePath: imagePath,
+                analysisData: {
+                  'crop': response.crop,
+                  'disease': response.predictedDisease,
+                  'confidence': response.confidence,
+                  'label': response.displayLabel,
+                },
+              );
+
+              if (success) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(AppTranslations.getText(langCode, 'share_success'))),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(AppTranslations.getText(langCode, 'share_failed'))),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+            child: Text(
+              AppTranslations.getText(langCode, 'post_btn'),
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
         ],
       ),
     );

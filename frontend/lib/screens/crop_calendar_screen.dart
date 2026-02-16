@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/crop_item.dart';
-import '../models/calendar_event.dart';
 import '../providers/language_provider.dart';
 import '../utils/translations.dart';
+import '../services/calendar_service.dart';
+import '../providers/user_provider.dart';
+import 'package:geolocator/geolocator.dart';
 
 class CropCalendarScreen extends StatefulWidget {
   final List<CropItem> myCrops;
@@ -20,14 +22,15 @@ class _CropCalendarScreenState extends State<CropCalendarScreen> {
   DateTime _sowingDate = DateTime.now();
   bool _isGenerated = false;
 
-  // DUMMY LOGIC: In a real app, this would come from a database based on the crop type
-  final List<CalendarEvent> _standardEvents = [
-    CalendarEvent(titleKey: 'activity_sow', descriptionKey: 'desc_sow', daysAfterSowing: 0, icon: Icons.grass, color: Colors.green),
-    CalendarEvent(titleKey: 'activity_water', descriptionKey: 'desc_water', daysAfterSowing: 3, icon: Icons.water_drop, color: Colors.blue),
-    CalendarEvent(titleKey: 'activity_fert', descriptionKey: 'desc_fert', daysAfterSowing: 15, icon: Icons.science, color: Colors.purple),
-    CalendarEvent(titleKey: 'activity_water', descriptionKey: 'desc_water', daysAfterSowing: 21, icon: Icons.water_drop, color: Colors.blue),
-    CalendarEvent(titleKey: 'activity_harvest', descriptionKey: 'desc_harvest', daysAfterSowing: 90, icon: Icons.agriculture, color: Colors.orange),
+  // Hardcoded supported crops for Calendar
+  final List<CropItem> _calendarCrops = [
+    CropItem(nameKey: 'Tomato', imagePath: 'assets/images/tomato.png', color: Colors.red.shade50),
+    CropItem(nameKey: 'Potato', imagePath: 'assets/images/potato.png', color: Colors.brown.shade50),
+    CropItem(nameKey: 'Corn', imagePath: 'assets/images/corn.png', color: Colors.yellow.shade50),
   ];
+
+  List<dynamic> _lifecycle = [];
+  bool _isLoading = false;
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -78,10 +81,16 @@ class _CropCalendarScreenState extends State<CropCalendarScreen> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),
                       value: _selectedCrop,
-                      items: widget.myCrops.map((crop) {
+                      items: _calendarCrops.map((crop) {
                         return DropdownMenuItem(
                           value: crop,
-                          child: Text(crop.nameKey), // Note: You might need to translate this dynamically
+                          child: Row( // Added Row to show image + text
+                            children: [
+                              Image.asset(crop.imagePath, width: 24, height: 24),
+                              const SizedBox(width: 10),
+                              Text(crop.nameKey),
+                            ],
+                          ),
                         );
                       }).toList(),
                       onChanged: (val) => setState(() {
@@ -113,16 +122,14 @@ class _CropCalendarScreenState extends State<CropCalendarScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          if (_selectedCrop != null) {
-                            setState(() => _isGenerated = true);
-                          }
-                        },
+                        onPressed: _isLoading ? null : _generateSchedule,
                         style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4CAF50)),
-                        child: Text(
-                          AppTranslations.getText(langCode, 'generate_schedule'),
-                          style: const TextStyle(color: Colors.white),
-                        ),
+                        child: _isLoading 
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : Text(
+                              AppTranslations.getText(langCode, 'generate_schedule'),
+                              style: const TextStyle(color: Colors.white),
+                            ),
                       ),
                     )
                   ],
@@ -141,38 +148,55 @@ class _CropCalendarScreenState extends State<CropCalendarScreen> {
               const SizedBox(height: 10),
               Expanded(
                 child: ListView.builder(
-                  itemCount: _standardEvents.length,
+                  itemCount: _lifecycle.length,
                   itemBuilder: (context, index) {
-                    final event = _standardEvents[index];
-                    final eventDate = _sowingDate.add(Duration(days: event.daysAfterSowing));
+                    final activity = _lifecycle[index];
+                    final dateStr = activity['scheduledDate'];
+                    final eventDate = DateTime.parse(dateStr);
                     final isPast = eventDate.isBefore(DateTime.now());
+                    final isRescheduled = activity['status'] == 'rescheduled';
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: isPast ? BorderSide.none : BorderSide(color: Colors.grey.shade200),
+                        side: BorderSide(
+                          color: isRescheduled ? Colors.orange.shade200 : Colors.grey.shade200,
+                        ),
                       ),
-                      color: isPast ? Colors.green.shade50 : Colors.white,
+                      color: isPast ? Colors.green.shade50 : (isRescheduled ? Colors.orange.shade50 : Colors.white),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: isPast ? Colors.green : event.color.withOpacity(0.1),
-                          child: Icon(event.icon, color: isPast ? Colors.white : event.color),
+                          backgroundColor: isPast ? Colors.green : (isRescheduled ? Colors.orange : Colors.blue.withOpacity(0.1)),
+                          child: Icon(
+                            isRescheduled ? Icons.event_repeat : (isPast ? Icons.check : Icons.calendar_today), 
+                            color: (isPast || isRescheduled) ? Colors.white : Colors.blue
+                          ),
                         ),
                         title: Text(
-                          AppTranslations.getText(langCode, event.titleKey),
+                          activity['name'],
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             decoration: isPast ? TextDecoration.lineThrough : null,
                             color: isPast ? Colors.grey : Colors.black,
                           ),
                         ),
-                        subtitle: Text(AppTranslations.getText(langCode, event.descriptionKey)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(activity['description']),
+                            if (isRescheduled)
+                              Text(
+                                "Rescheduled: ${activity['reschedulingReason'] ?? 'Weather adjustment'}",
+                                style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                          ],
+                        ),
                         trailing: Text(
                           dateFormat.format(eventDate),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: isPast ? Colors.green : Colors.grey,
+                            color: isPast ? Colors.green : (isRescheduled ? Colors.orange : Colors.grey),
                             fontSize: 12
                           ),
                         ),
@@ -186,5 +210,76 @@ class _CropCalendarScreenState extends State<CropCalendarScreen> {
         ),
       ),
     );
+  }
+
+  Future<Position?> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location services are disabled.')));
+      return null;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location permissions are denied')));
+        return null;
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location permissions are permanently denied.')));
+      return null;
+    }
+
+    return await Geolocator.getCurrentPosition();
+  }
+
+  Future<void> _generateSchedule() async {
+    if (_selectedCrop == null) return;
+
+    setState(() => _isLoading = true);
+
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final sowingDateStr = DateFormat('yyyy-MM-dd').format(_sowingDate);
+
+    // Get Location
+    double lat = 0.0;
+    double lng = 0.0;
+    
+    try {
+      final position = await _getCurrentLocation();
+      if (position != null) {
+        lat = position.latitude;
+        lng = position.longitude;
+      }
+    } catch (e) {
+      print("Error getting location: $e");
+    }
+
+    final result = await CalendarService.generateCalendar(
+      userId: userProvider.phone,
+      crop: _selectedCrop!.nameKey, 
+      sowingDate: sowingDateStr,
+      lat: lat,
+      lng: lng,
+    );
+
+    if (result != null && result['calendar'] != null) {
+      setState(() {
+        _lifecycle = result['calendar']['lifecycle'];
+        _isGenerated = true;
+        _isLoading = false;
+      });
+    } else {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to generate schedule")),
+      );
+    }
   }
 }

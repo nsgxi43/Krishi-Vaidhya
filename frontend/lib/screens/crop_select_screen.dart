@@ -3,10 +3,16 @@ import 'package:provider/provider.dart';
 import '../models/crop_item.dart';
 import '../providers/language_provider.dart';
 import '../utils/translations.dart';
-
+import 'home_screen.dart';
 class CropSelectScreen extends StatefulWidget {
   final List<CropItem> initialCrops;
-  const CropSelectScreen({super.key, required this.initialCrops});
+  final bool isInitialSetup;
+
+  const CropSelectScreen({
+    super.key, 
+    required this.initialCrops, 
+    this.isInitialSetup = false,
+  });
 
   @override
   State<CropSelectScreen> createState() => _CropSelectScreenState();
@@ -15,20 +21,22 @@ class CropSelectScreen extends StatefulWidget {
 class _CropSelectScreenState extends State<CropSelectScreen> {
   // Master list of crops ordered by Priority
   final List<CropItem> _allCrops = [
-    // --- PRIORITY GROUP ---
-    CropItem(nameKey: 'Apple', imagePath: 'assets/images/apple.png', color: Colors.red.shade50),
-    CropItem(nameKey: 'Corn', imagePath: 'assets/images/corn.png', color: Colors.yellow.shade50),
-    CropItem(nameKey: 'Potato', imagePath: 'assets/images/potato.png', color: Colors.brown.shade50),
-    CropItem(nameKey: 'Soyabean', imagePath: 'assets/images/soyabean.png', color: Colors.green.shade50),
+    // --- SUPPORTED CROPS (Backend) ---
     CropItem(nameKey: 'Tomato', imagePath: 'assets/images/tomato.png', color: Colors.red.shade50),
+    CropItem(nameKey: 'Potato', imagePath: 'assets/images/potato.png', color: Colors.brown.shade50),
+    CropItem(nameKey: 'Corn', imagePath: 'assets/images/corn.png', color: Colors.yellow.shade50),
+    CropItem(nameKey: 'Wheat', imagePath: 'assets/images/wheat.png', color: Colors.orange.shade50),
+    CropItem(nameKey: 'Rice', imagePath: 'assets/images/rice.png', color: Colors.green.shade50),
+
+    // --- UNSUPPORTED CROPS (Placeholder) ---
+    CropItem(nameKey: 'Apple', imagePath: 'assets/images/apple.png', color: Colors.red.shade50),
+    CropItem(nameKey: 'Soyabean', imagePath: 'assets/images/soyabean.png', color: Colors.green.shade50),
     CropItem(nameKey: 'Blueberry', imagePath: 'assets/images/blueberry.png', color: Colors.purple.shade50),
     CropItem(nameKey: 'Cherry', imagePath: 'assets/images/cherry.png', color: Colors.red.shade100),
     CropItem(nameKey: 'Grape', imagePath: 'assets/images/grape.png', color: Colors.purple.shade100),
     CropItem(nameKey: 'Peach', imagePath: 'assets/images/peach.png', color: Colors.orange.shade50),
     CropItem(nameKey: 'Raspberry', imagePath: 'assets/images/raspberry.png', color: Colors.red.shade200),
     CropItem(nameKey: 'Strawberry', imagePath: 'assets/images/strawberry.png', color: Colors.red.shade300),
-
-    // --- REMAINING CROPS ---
     CropItem(nameKey: 'Cotton', imagePath: 'assets/images/cotton.png', color: Colors.blue.shade50),
     CropItem(nameKey: 'Sugarcane', imagePath: 'assets/images/sugarcane.jpg', color: Colors.lightGreen.shade50),
     CropItem(nameKey: 'Chilli', imagePath: 'assets/images/chilli.png', color: Colors.red.shade100),
@@ -45,8 +53,6 @@ class _CropSelectScreenState extends State<CropSelectScreen> {
     CropItem(nameKey: 'Pomegranate', imagePath: 'assets/images/pomegranate.png', color: Colors.red.shade100),
     CropItem(nameKey: 'Ginger', imagePath: 'assets/images/ginger.png', color: Colors.brown.shade200),
     CropItem(nameKey: 'Spinach', imagePath: 'assets/images/spinach.png', color: Colors.green.shade200),
-    CropItem(nameKey: 'Wheat', imagePath: 'assets/images/wheat.png', color: Colors.orange.shade50),
-    CropItem(nameKey: 'Rice', imagePath: 'assets/images/rice.png', color: Colors.green.shade50),
   ];
 
   @override
@@ -58,7 +64,21 @@ class _CropSelectScreenState extends State<CropSelectScreen> {
   }
 
   void _saveSelection() {
-    Navigator.pop(context, _allCrops.where((c) => c.isSelected).toList());
+    final selectedCrops = _allCrops.where((c) => c.isSelected).toList();
+    
+    if (widget.isInitialSetup) {
+      // Navigate to Home Screen and clear stack
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(initialCrops: selectedCrops),
+        ),
+        (route) => false,
+      );
+    } else {
+      // Just return the selected crops (Edit Mode)
+      Navigator.pop(context, selectedCrops);
+    }
   }
 
   @override
@@ -69,11 +89,14 @@ class _CropSelectScreenState extends State<CropSelectScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-          AppTranslations.getText(langCode, 'selected_crops'),
+          widget.isInitialSetup 
+            ? "Select Your Crops" // Hardcoded or use translation if key available
+            : AppTranslations.getText(langCode, 'selected_crops'),
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
+        automaticallyImplyLeading: !widget.isInitialSetup, // Hide back button on initial setup
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Column(

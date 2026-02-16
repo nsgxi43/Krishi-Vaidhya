@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'home_screen.dart'; // Make sure you have this file created
+import 'crop_select_screen.dart'; 
+import '../services/auth_service.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String mobileNumber;
@@ -39,24 +40,35 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1)); 
-    setState(() => _isLoading = false);
-
     // COMPARE ENTERED OTP WITH GENERATED OTP
     if (enteredOtp == widget.generatedOtp.toString()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login Successful!"), backgroundColor: Colors.green),
-      );
+      // CALL AUTH SERVICE TO LOGIN AND SYNC WITH DB
+      final loginSuccess = await AuthService.login(widget.mobileNumber);
+      setState(() => _isLoading = false);
 
-      // Navigate to Home and remove login history
+      if (loginSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login Successful!"), backgroundColor: Colors.green),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login synced with offline local storage."), backgroundColor: Colors.blue),
+        );
+      }
+
+      // Navigate to Crop Selection Screen
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(
+          builder: (context) => const CropSelectScreen(
+            initialCrops: [], 
+            isInitialSetup: true
+          )
+        ),
         (route) => false,
       );
-
     } else {
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Invalid OTP. Please try again."), backgroundColor: Colors.red),
       );

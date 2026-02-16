@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart'; // Import this
 import 'providers/language_provider.dart';
 import 'providers/user_provider.dart';
-import 'providers/theme_provider.dart'; // <--- 1. Import this
-import 'screens/language_screen.dart'; // <--- Start with Language Selection
+import 'providers/theme_provider.dart';
+import 'screens/language_screen.dart';
 
-void main() {
+void main() async { // Make main async
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure binding is initialized
+  await initializeDateFormatting(); // Initialize date data
   runApp(
     MultiProvider(
       providers: [

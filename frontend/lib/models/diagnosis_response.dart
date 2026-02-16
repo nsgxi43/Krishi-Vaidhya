@@ -70,12 +70,25 @@ class DiagnosisLLM {
   });
 
   factory DiagnosisLLM.fromJson(Map<String, dynamic> json) {
+    // Helper function to safely parse list fields that might be strings
+    List<String> _parseListField(dynamic field) {
+      if (field == null) return [];
+      if (field is List) {
+        return field.map((e) => e.toString()).toList();
+      }
+      if (field is String) {
+        // If it's a string, wrap it in a list
+        return [field];
+      }
+      return [];
+    }
+    
     return DiagnosisLLM(
       diseaseOverview: json['disease_overview'] ?? "",
       whyThisPrediction: json['why_this_prediction'] ?? "",
-      chemicalTreatments: List<String>.from(json['chemical_treatments'] ?? []),
-      organicTreatments: List<String>.from(json['organic_treatments'] ?? []),
-      preventionTips: List<String>.from(json['prevention_tips'] ?? []),
+      chemicalTreatments: _parseListField(json['chemical_treatments']),
+      organicTreatments: _parseListField(json['organic_treatments']),
+      preventionTips: _parseListField(json['prevention_tips']),
     );
   }
 }

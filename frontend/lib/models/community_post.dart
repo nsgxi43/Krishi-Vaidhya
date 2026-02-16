@@ -7,6 +7,8 @@ class CommunityPost {
   final int commentsCount;
   final DateTime createdAt;
   final List<String> likedBy;
+  final String? imageUrl;
+  final Map<String, dynamic>? analysisData;
 
   CommunityPost({
     required this.id,
@@ -17,6 +19,8 @@ class CommunityPost {
     required this.commentsCount,
     required this.createdAt,
     this.likedBy = const [],
+    this.imageUrl,
+    this.analysisData,
   });
 
   factory CommunityPost.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,8 @@ class CommunityPost {
       commentsCount: json['commentsCount'] ?? 0,
       createdAt: _parseDate(json['createdAt']),
       likedBy: List<String>.from(json['likedBy'] ?? []),
+      imageUrl: json['imageUrl'],
+      analysisData: json['analysisData'] is Map<String, dynamic> ? json['analysisData'] : null,
     );
   }
 

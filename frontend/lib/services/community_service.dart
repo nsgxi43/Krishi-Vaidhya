@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../models/community_post.dart';
 import 'api_service.dart';
 
@@ -25,18 +27,45 @@ class CommunityService {
     }
   }
 
-  static Future<bool> createPost(String userId, String content, double lat, double lng) async {
+  static Future<bool> createPost(String userId, String content, double lat, double lng, {String? imagePath, Map<String, dynamic>? analysisData}) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/community/posts'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "userId": userId,
-          "content": content,
-          "lat": lat,
-          "lng": lng,
-        }),
-      );
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/community/posts'));
+      
+      request.fields['userId'] = userId;
+      request.fields['content'] = content;
+      request.fields['lat'] = lat.toString();
+      request.fields['lng'] = lng.toString();
+      
+      if (analysisData != null) {
+        request.fields['analysisData'] = jsonEncode(analysisData);
+      }
+
+      if (imagePath != null) {
+        if (kIsWeb) {
+          // Web: Read bytes from blob/url
+          final res = await http.get(Uri.parse(imagePath));
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'image',
+              res.bodyBytes,
+              filename: 'upload.jpg',
+              contentType: MediaType('image', 'jpeg'),
+            ),
+          );
+        } else {
+          // Mobile/Desktop: Use file path
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'image',
+              imagePath,
+              contentType: MediaType('image', 'jpeg'),
+            ),
+          );
+        }
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
 
       return response.statusCode == 200;
     } catch (e) {

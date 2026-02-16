@@ -68,10 +68,95 @@ class ImagePreviewScreen extends StatelessWidget {
     } catch (e) {
       // Handle crashes/errors
       if (context.mounted) {
-        Navigator.pop(context); // Close dialog if open
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error: $e")));
+        Navigator.pop(context); // Close loading dialog
+        
+        // Extract user-friendly error message
+        String errorMessage = "Analysis failed. Please try again.";
+        bool isNotPlantError = false;
+        
+        if (e.toString().contains("Not a Plant Image") || e.toString().contains("not appear to be")) {
+          isNotPlantError = true;
+          errorMessage = "The uploaded image does not appear to be a clear plant/crop image.";
+        } else if (e.toString().contains("Exception:")) {
+          // Extract message after "Exception: "
+          errorMessage = e.toString().replaceFirst("Exception: ", "");
+        }
+        
+        // Show prominent dialog for non-plant images
+        if (isNotPlantError) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+                  SizedBox(width: 8),
+                  Text("Not a Plant Image"),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    errorMessage,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  SizedBox(height: 16),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.lightbulb_outline, color: Colors.green, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              "Tips for best results:",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        Text("• Take a clear photo of plant leaves"),
+                        Text("• Show affected/diseased areas"),
+                        Text("• Ensure good lighting"),
+                        Text("• Avoid blurry images"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(ctx); // Close dialog
+                    Navigator.pop(context); // Go back to camera
+                  },
+                  child: Text("Retake Photo", style: TextStyle(fontSize: 16)),
+                ),
+              ],
+            ),
+          );
+        } else {
+          // Show SnackBar for other errors
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
       }
     }
   }

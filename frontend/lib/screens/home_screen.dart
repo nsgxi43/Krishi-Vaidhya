@@ -10,7 +10,7 @@ import '../widgets/weather_card.dart';
 
 // Screens (These are in the same folder, so just use the filename)
 import 'camera_screen.dart';
-import 'calendar_screen.dart';
+import 'crop_calendar_screen.dart';
 import 'agri_store_screen.dart';
 import 'crop_select_screen.dart';
 import 'profile_screen.dart';
@@ -20,7 +20,8 @@ import 'settings_screen.dart';
 // --- FIXED IMPORTS END ---
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final List<CropItem>? initialCrops;
+  const HomeScreen({super.key, this.initialCrops});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -30,12 +31,17 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   int _notificationCount = 3;
 
-  // Initial dummy data for testing. 
-  // Ideally, this list should come from UserProvider so it persists across screens.
-  List<CropItem> _myCrops = [
-    CropItem(nameKey: 'Apple', imagePath: 'assets/images/apple.png', color: Colors.red.shade50, isSelected: true),
-    CropItem(nameKey: 'Wheat', imagePath: 'assets/images/wheat.png', color: Colors.orange.shade50, isSelected: true),
-  ];
+  late List<CropItem> _myCrops;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize crops from constructor or default dummy data
+    _myCrops = widget.initialCrops ?? [
+      CropItem(nameKey: 'Tomato', imagePath: 'assets/images/tomato.png', color: Colors.red.shade50, isSelected: true),
+      CropItem(nameKey: 'Wheat', imagePath: 'assets/images/wheat.png', color: Colors.orange.shade50, isSelected: true),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() => _selectedIndex = index);
@@ -337,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
             childAspectRatio: 1.5,
             children: [
               _buildToolCard(context, AppTranslations.getText(langCode, 'store_title'), Icons.store_mall_directory, Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AgriStoreScreen()))),
-              _buildToolCard(context, AppTranslations.getText(langCode, 'calendar'), Icons.calendar_today, Colors.blue, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CalendarScreen()))),
+              _buildToolCard(context, AppTranslations.getText(langCode, 'calendar'), Icons.calendar_today, Colors.blue, () { Navigator.push(context, MaterialPageRoute(builder: (context) => CropCalendarScreen(myCrops: _myCrops))); }),
               _buildToolCard(context, AppTranslations.getText(langCode, 'fertilizer'), Icons.calculate, Colors.purple, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FertilizerCalculatorScreen()))),
               _buildToolCard(context, AppTranslations.getText(langCode, 'alerts'), Icons.notifications_active, Colors.red, () => _showNotifications()),
             ],
