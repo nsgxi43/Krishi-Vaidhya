@@ -6,11 +6,13 @@ class UserProvider with ChangeNotifier {
   String _name = "Farmer";
   String _phone = "";
   String _location = "India";
+  List<String> _crops = [];
 
   // Getters (To read data)
   String get name => _name;
   String get phone => _phone;
   String get location => _location;
+  List<String> get crops => _crops;
   
   UserProvider() {
     loadUserData();
@@ -21,6 +23,7 @@ class UserProvider with ChangeNotifier {
     _name = profile['name'] ?? "Farmer";
     _phone = profile['phone'] ?? "";
     _location = profile['location'] ?? "India";
+    _crops = List<String>.from(profile['crops'] ?? []);
     notifyListeners();
   }
 
@@ -34,5 +37,12 @@ class UserProvider with ChangeNotifier {
     AuthService.updateProfile(newName, newLocation);
     
     notifyListeners(); 
+  }
+
+  // Function to Update Crops
+  void updateCrops(List<String> newCrops) {
+    _crops = newCrops;
+    AuthService.updateCrops(newCrops);
+    notifyListeners();
   }
 }
