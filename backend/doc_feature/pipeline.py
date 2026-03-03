@@ -71,28 +71,59 @@ def run_pipeline(image_path: str, user_id: str, lat: float, lng: float) -> dict:
         cnn_output["userId"] = user_id
         
         # Step 2: Grad-CAM Explainability
-        cnn_output = run_gradcam(image_path, cnn_output, model)
+        try:
+            cnn_output = run_gradcam(image_path, cnn_output, model)
+        except Exception as e:
+            print(f"Grad-CAM step failed: {e}. Adding fallback explainability.")
+            cnn_output["explainability"] = {
+                "method": "CNN Analysis",
+                "summary": f"AI detected patterns consistent with {cnn_output.get('predicted_disease', 'unknown')}."
+            }
+        
+        # Ensure explainability key exists before LLM step
+        if "explainability" not in cnn_output:
+            cnn_output["explainability"] = {
+                "method": "CNN Analysis",
+                "summary": f"Pattern analysis identified {cnn_output.get('predicted_disease', 'unknown')}."
+            }
         
         # Step 3: LLM Explanation
-        llm_output = get_llm_explanation(cnn_output)
+        try:
+            llm_output = get_llm_explanation(cnn_output)
+        except Exception as e:
+            print(f"LLM step failed: {e}. Using local explanation.")
+            from .llm import _generate_local_explanation  # type: ignore
+            llm_output = _generate_local_explanation(cnn_output)
     
     # Step 4: Normalize Location
-    location = normalize_location(lat, lng)
+    try:
+        location = normalize_location(lat, lng)
+    except Exception as e:
+        print(f"Location normalization failed: {e}. Using defaults.")
+        location = {"lat": lat, "lng": lng, "state": "Unknown", "district": "Unknown", "village": "Unknown"}
     
     # Step 5: Save to Firestore
-    diagnosis_id = create_diagnosis(
-        user_id=cnn_output["userId"],
-        crop=cnn_output["crop"],
-        disease=cnn_output["predicted_disease"],
-        confidence=cnn_output["confidence"],
-        explainability=cnn_output["explainability"],
-        location=location,
-        llm=llm_output
-    )
+    try:
+        diagnosis_id = create_diagnosis(
+            user_id=cnn_output["userId"],
+            crop=cnn_output["crop"],
+            disease=cnn_output["predicted_disease"],
+            confidence=cnn_output["confidence"],
+            explainability=cnn_output.get("explainability", {}),
+            location=location,
+            llm=llm_output
+        )
+    except Exception as e:
+        print(f"Failed to save diagnosis: {e}")
+        diagnosis_id = "local_diagnosis"
     
     # Step 6: Get Nearby Agri Stores
-    from .agri_store_service import get_nearby_agri_stores  # type: ignore
-    agri_stores = get_nearby_agri_stores(location, radius_km=10)
+    try:
+        from .agri_store_service import get_nearby_agri_stores  # type: ignore
+        agri_stores = get_nearby_agri_stores(location, radius_km=10)
+    except Exception as e:
+        print(f"Failed to fetch agri stores: {e}")
+        agri_stores = []
     
     # Final output
     final_output = {
