@@ -1,12 +1,32 @@
 # Secrets
 backend/db/firebase.json
+backend/db/firebase-key.json
+backend/.env
+
+# OS files
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+backend/senv/
 
 # Logs / temp
 *.log
 *import_test_result.txt
+*.txt
+!README.md
 
 # Tests
 backend/test_*.py
 
 # Static
 backend/static/
+
+# Build artifacts
+frontend/android/build/
+frontend/build/
+build/
