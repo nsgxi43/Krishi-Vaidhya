@@ -407,6 +407,7 @@ class ResultScreen extends StatelessWidget {
                 content,
                 0.0, // Should use real location if available
                 0.0,
+                userName: userProvider.name,
                 imagePath: imagePath,
                 analysisData: {
                   'crop': response.crop,
