@@ -7,6 +7,10 @@ class AppTranslations {
       // General & Auth
       'app_title': 'Krishi Vaidhya',
       'welcome': 'Welcome Farmer',
+      'good_morning': 'Good Morning,',
+      'good_afternoon': 'Good Afternoon,',
+      'good_evening': 'Good Evening,',
+      'scan_now': 'Scan Now',
       'enter_mobile': 'Enter your mobile number',
       'get_otp': 'Get OTP',
       'enter_otp': 'Enter OTP',
@@ -16,8 +20,21 @@ class AppTranslations {
       'invalid_otp': 'Invalid OTP',
       'select_language': 'Select Language',
       'save': 'Save',
+      'continue_text': 'Continue',
       'change_number': 'Change Number',
       'camera_unavailable': 'Camera Unavailable', // Added key
+
+      // Name Input Screen
+      'whats_your_name': 'What is your name?',
+      'name_subtitle': 'Tell us your name so we can personalize your experience',
+      'enter_name': 'Enter your name',
+      'name_hint': 'e.g. Ramesh Kumar',
+      'name_required': 'Name is required',
+      'name_too_short': 'Name must be at least 2 characters',
+
+      // Crop Selection
+      'tap_to_select_crops': 'Tap to select crops:',
+      'max_crops_warning': 'You can select a maximum of 5 crops',
 
       // Home Screen
       'sunny': 'Sunny',
@@ -181,6 +198,38 @@ class AppTranslations {
       'faq_1_a': 'Go to Home > Take Picture. Ensure the leaf is clearly visible.',
       'faq_2_q': 'Is this app free?',
       'faq_2_a': 'Yes, Krishi Vaidhya is completely free for farmers.',
+
+      // Predictive Analysis (Epic 12)
+      'pred_title': 'Disease\nAlerts',
+      'pred_analyzing': 'Analyzing your area...',
+      'pred_analyzing_sub': 'Checking community reports, weather & crop risks',
+      'pred_error': 'Failed to load alerts',
+      'pred_retry': 'Retry',
+      'pred_alerts_header': 'Disease Alerts',
+      'pred_risk_high_banner': 'High Risk — Immediate Action Needed!',
+      'pred_risk_medium_banner': 'Moderate Risk — Stay Vigilant',
+      'pred_risk_low_banner': 'Low Risk — Keep Monitoring',
+      'pred_all_clear': 'All Clear — No Threats Detected',
+      'pred_high': 'High',
+      'pred_medium': 'Medium',
+      'pred_low': 'Low',
+      'pred_humidity': 'Humidity',
+      'pred_monitoring': 'Monitoring',
+      'pred_no_alerts': 'Your crops are safe!',
+      'pred_no_alerts_desc': 'No disease outbreaks detected near your area. We will keep monitoring.',
+      'pred_affects': 'Affects',
+      'pred_cases_nearby': 'case(s) nearby',
+      'pred_spread': 'Spread',
+      'pred_airborne': 'Airborne (wind)',
+      'pred_waterborne': 'Waterborne (rain)',
+      'pred_insect': 'Insect vector',
+      'pred_contact': 'Contact / Tools',
+      'pred_wind': 'Wind dispersed',
+      'pred_weather_warning': 'Weather favors disease spread',
+      'pred_prevention': 'Preventive Actions',
+      'pred_treatments': 'View Treatments',
+      'pred_chemical': 'Chemical Treatments',
+      'pred_organic': 'Organic Treatments',
     },
 
     // ==========================================================
@@ -189,6 +238,10 @@ class AppTranslations {
     'hi': {
       'app_title': 'कृषि वैद्य',
       'welcome': 'किसान का स्वागत है',
+      'good_morning': 'सुप्रभात,',
+      'good_afternoon': 'शुभ दोपहर,',
+      'good_evening': 'शुभ संध्या,',
+      'scan_now': 'अभी स्कैन करें',
       'enter_mobile': 'अपना मोबाइल नंबर दर्ज करें',
       'get_otp': 'ओटीपी प्राप्त करें',
       'enter_otp': 'ओटीपी दर्ज करें',
@@ -198,8 +251,21 @@ class AppTranslations {
       'invalid_otp': 'अमान्य ओटीपी',
       'select_language': 'भाषा चुनें',
       'save': 'सहेजें',
+      'continue_text': 'जारी रखें',
       'change_number': 'नंबर बदलें',
       'camera_unavailable': 'कैमरा उपलब्ध नहीं है', // Added key
+
+      // Name Input Screen
+      'whats_your_name': 'आपका नाम क्या है?',
+      'name_subtitle': 'अपना नाम बताएं ताकि हम आपका अनुभव व्यक्तिगत बना सकें',
+      'enter_name': 'अपना नाम दर्ज करें',
+      'name_hint': 'जैसे रमेश कुमार',
+      'name_required': 'नाम आवश्यक है',
+      'name_too_short': 'नाम कम से कम 2 अक्षर का होना चाहिए',
+
+      // Crop Selection
+      'tap_to_select_crops': 'फसलें चुनने के लिए टैप करें:',
+      'max_crops_warning': 'आप अधिकतम 5 फसलें चुन सकते हैं',
 
       'sunny': 'धूप',
       'selected_crops': 'चयनित फसलें',
@@ -351,6 +417,38 @@ class AppTranslations {
       'faq_1_a': 'होम > फोटो लें पर जाएं। सुनिश्चित करें कि पत्ती स्पष्ट रूप से दिखाई दे रही है।',
       'faq_2_q': 'क्या यह ऐप मुफ़्त है?',
       'faq_2_a': 'हां, कृषि वैद्य किसानों के लिए पूरी तरह से मुफ़्त है।',
+
+      // Predictive Analysis (Epic 12)
+      'pred_title': 'रोग\nचेतावनी',
+      'pred_analyzing': 'आपके क्षेत्र का विश्लेषण...',
+      'pred_analyzing_sub': 'समुदाय रिपोर्ट, मौसम और फसल जोखिम जांच रहे हैं',
+      'pred_error': 'अलर्ट लोड करने में विफल',
+      'pred_retry': 'पुनः प्रयास',
+      'pred_alerts_header': 'रोग चेतावनियाँ',
+      'pred_risk_high_banner': 'उच्च जोखिम — तुरंत कार्रवाई करें!',
+      'pred_risk_medium_banner': 'मध्यम जोखिम — सतर्क रहें',
+      'pred_risk_low_banner': 'कम जोखिम — निगरानी जारी रखें',
+      'pred_all_clear': 'सब ठीक — कोई खतरा नहीं',
+      'pred_high': 'उच्च',
+      'pred_medium': 'मध्यम',
+      'pred_low': 'कम',
+      'pred_humidity': 'नमी',
+      'pred_monitoring': 'निगरानी',
+      'pred_no_alerts': 'आपकी फसलें सुरक्षित हैं!',
+      'pred_no_alerts_desc': 'आपके क्षेत्र में कोई रोग प्रकोप नहीं मिला। हम निगरानी जारी रखेंगे।',
+      'pred_affects': 'प्रभावित',
+      'pred_cases_nearby': 'मामले पास में',
+      'pred_spread': 'फैलाव',
+      'pred_airborne': 'हवा से',
+      'pred_waterborne': 'पानी से',
+      'pred_insect': 'कीट वाहक',
+      'pred_contact': 'संपर्क / उपकरण',
+      'pred_wind': 'हवा द्वारा',
+      'pred_weather_warning': 'मौसम रोग फैलने के अनुकूल',
+      'pred_prevention': 'निवारक उपाय',
+      'pred_treatments': 'उपचार देखें',
+      'pred_chemical': 'रासायनिक उपचार',
+      'pred_organic': 'जैविक उपचार',
     },
 
     // ==========================================================
@@ -359,6 +457,10 @@ class AppTranslations {
     'ta': {
       'app_title': 'கிருஷி வைத்யா',
       'welcome': 'விவசாயி வருக',
+      'good_morning': 'காலை வணக்கம்,',
+      'good_afternoon': 'மதிய வணக்கம்,',
+      'good_evening': 'மாலை வணக்கம்,',
+      'scan_now': 'இப்போது ஸ்கேன் செய்யுங்கள்',
       'enter_mobile': 'உங்கள் மொபைல் எண்ணை உள்ளிடவும்',
       'get_otp': 'OTP பெறவும்',
       'enter_otp': 'OTP உள்ளிடவும்',
@@ -368,6 +470,19 @@ class AppTranslations {
       'invalid_otp': 'தவறான OTP',
       'select_language': 'மொழியைத் தேர்ந்தெடுக்கவும்',
       'save': 'சேமி',
+      'continue_text': 'தொடரவும்',
+
+      // Name Input Screen
+      'whats_your_name': 'உங்கள் பெயர் என்ன?',
+      'name_subtitle': 'உங்கள் அனுபவத்தை தனிப்பயனாக்க உங்கள் பெயரைச் சொல்லுங்கள்',
+      'enter_name': 'உங்கள் பெயரை உள்ளிடவும்',
+      'name_hint': 'எ.கா. ரமேஷ் குமார்',
+      'name_required': 'பெயர் தேவை',
+      'name_too_short': 'பெயர் குறைந்தது 2 எழுத்துகள் இருக்க வேண்டும்',
+
+      // Crop Selection
+      'tap_to_select_crops': 'பயிர்களைத் தேர்ந்தெடுக்க தட்டவும்:',
+      'max_crops_warning': 'நீங்கள் அதிகபட்சம் 5 பயிர்களைத் தேர்ந்தெடுக்கலாம்',
       'change_number': 'எண்ணை மாற்றவும்',
       'camera_unavailable': 'கேமரா கிடைக்கவில்லை', // Added key
 
@@ -515,6 +630,38 @@ class AppTranslations {
       'faq_1_a': 'முகப்பு > படம் எடு என்பதற்குச் செல்லவும்.',
       'faq_2_q': 'இந்த செயலி இலவசமா?',
       'faq_2_a': 'ஆம், விவசாயிகளுக்கு இது முற்றிலும் இலவசம்.',
+
+      // Predictive Analysis (Epic 12)
+      'pred_title': 'நோய்\nஎச்சரிக்கை',
+      'pred_analyzing': 'உங்கள் பகுதியை பகுப்பாய்வு...',
+      'pred_analyzing_sub': 'சமூக அறிக்கைகள், வானிலை மற்றும் பயிர் அபாயங்களை சரிபார்க்கிறோம்',
+      'pred_error': 'எச்சரிக்கைகளை ஏற்ற முடியவில்லை',
+      'pred_retry': 'மீண்டும் முயற்சி',
+      'pred_alerts_header': 'நோய் எச்சரிக்கைகள்',
+      'pred_risk_high_banner': 'அதிக ஆபத்து — உடனடி நடவடிக்கை தேவை!',
+      'pred_risk_medium_banner': 'மிதமான ஆபத்து — விழிப்புடன் இருங்கள்',
+      'pred_risk_low_banner': 'குறைந்த ஆபத்து — கண்காணிப்பை தொடருங்கள்',
+      'pred_all_clear': 'எல்லாம் நல்லது — அச்சுறுத்தல் இல்லை',
+      'pred_high': 'அதிகம்',
+      'pred_medium': 'மிதம்',
+      'pred_low': 'குறைவு',
+      'pred_humidity': 'ஈரப்பதம்',
+      'pred_monitoring': 'கண்காணிப்பு',
+      'pred_no_alerts': 'உங்கள் பயிர்கள் பாதுகாப்பாக!',
+      'pred_no_alerts_desc': 'உங்கள் பகுதியில் நோய் பரவல் கண்டறியப்படவில்லை. கண்காணிப்பு தொடரும்.',
+      'pred_affects': 'பாதிக்கும்',
+      'pred_cases_nearby': 'வழக்கு(கள்) அருகில்',
+      'pred_spread': 'பரவல்',
+      'pred_airborne': 'காற்று மூலம்',
+      'pred_waterborne': 'நீர் மூலம்',
+      'pred_insect': 'பூச்சி வழி',
+      'pred_contact': 'தொடுதல் / கருவிகள்',
+      'pred_wind': 'காற்றில்',
+      'pred_weather_warning': 'வானிலை நோய் பரவலுக்கு சாதகம்',
+      'pred_prevention': 'தடுப்பு நடவடிக்கைகள்',
+      'pred_treatments': 'சிகிச்சைகள் காண்க',
+      'pred_chemical': 'இரசாயன சிகிச்சை',
+      'pred_organic': 'இயற்கை சிகிச்சை',
     },
 
     // ==========================================================
@@ -523,11 +670,28 @@ class AppTranslations {
     'te': {
       'app_title': 'కృషి వైద్య',
       'welcome': 'రైతు స్వాగతం',
+      'good_morning': 'శుభోదయం,',
+      'good_afternoon': 'మధ్యాహ్నం శుభాకాంక్షలు,',
+      'good_evening': 'శుభ సాయంత్రం,',
+      'scan_now': 'ఇప్పుడు స్కాన్ చేయండి',
       'login': 'లాగిన్',
       'select_language': 'భాషను ఎంచుకోండి',
       'save': 'సేవ్',
+      'continue_text': 'కొనసాగించు',
       'change_number': 'సంఖ్య మార్చండి',
       'camera_unavailable': 'కెమెరా అందుబాటులో లేదు', // Added key
+
+      // Name Input Screen
+      'whats_your_name': 'మీ పేరు ఏమిటి?',
+      'name_subtitle': 'మీ అనుభవాన్ని వ్యక్తిగతీకరించడానికి మీ పేరు చెప్పండి',
+      'enter_name': 'మీ పేరు నమోదు చేయండి',
+      'name_hint': 'ఉదా. రమేష్ కుమార్',
+      'name_required': 'పేరు అవసరం',
+      'name_too_short': 'పేరు కనీసం 2 అక్షరాలు ఉండాలి',
+
+      // Crop Selection
+      'tap_to_select_crops': 'పంటలను ఎంచుకోవడానికి నొక్కండి:',
+      'max_crops_warning': 'మీరు గరిష్టంగా 5 పంటలను ఎంచుకోవచ్చు',
 
       'sunny': 'ఎండ',
       'selected_crops': 'ఎంచుకున్న పంటలు',
@@ -665,6 +829,38 @@ class AppTranslations {
       'faq_1_a': 'హోమ్ > ఫోటో తీయండి.',
       'faq_2_q': 'ఈ యాప్ ఉచితమేనా?',
       'faq_2_a': 'అవును, ఇది రైతులకు పూర్తిగా ఉచితం.',
+
+      // Predictive Analysis (Epic 12)
+      'pred_title': 'వ్యాధి\nహెచ్చరికలు',
+      'pred_analyzing': 'మీ ప్రాంతాన్ని విశ్లేషిస్తోంది...',
+      'pred_analyzing_sub': 'కమ్యూనిటీ నివేదికలు, వాతావరణం & పంట ప్రమాదాలను తనిఖీ చేస్తోంది',
+      'pred_error': 'హెచ్చరికలు లోడ్ చేయడం విఫలమైంది',
+      'pred_retry': 'మళ్ళీ ప్రయత్నించు',
+      'pred_alerts_header': 'వ్యాధి హెచ్చరికలు',
+      'pred_risk_high_banner': 'అధిక ప్రమాదం — వెంటనే చర్య తీసుకోండి!',
+      'pred_risk_medium_banner': 'మధ్యస్థ ప్రమాదం — జాగ్రత్తగా ఉండండి',
+      'pred_risk_low_banner': 'తక్కువ ప్రమాదం — పర్యవేక్షణ కొనసాగించండి',
+      'pred_all_clear': 'అంతా బాగుంది — ప్రమాదం లేదు',
+      'pred_high': 'అధిక',
+      'pred_medium': 'మధ్యస్థ',
+      'pred_low': 'తక్కువ',
+      'pred_humidity': 'తేమ',
+      'pred_monitoring': 'పర్యవేక్షణ',
+      'pred_no_alerts': 'మీ పంటలు సురక్షితం!',
+      'pred_no_alerts_desc': 'మీ ప్రాంతంలో వ్యాధి వ్యాప్తి కనుగొనబడలేదు. పర్యవేక్షణ కొనసాగుతుంది.',
+      'pred_affects': 'ప్రభావితం',
+      'pred_cases_nearby': 'కేసు(లు) సమీపంలో',
+      'pred_spread': 'వ్యాప్తి',
+      'pred_airborne': 'గాలి ద్వారా',
+      'pred_waterborne': 'నీటి ద్వారా',
+      'pred_insect': 'పురుగు వాహకం',
+      'pred_contact': 'స్పర్శ / పనిముట్లు',
+      'pred_wind': 'గాలిలో',
+      'pred_weather_warning': 'వాతావరణం వ్యాధి వ్యాప్తికి అనుకూలం',
+      'pred_prevention': 'నివారణ చర్యలు',
+      'pred_treatments': 'చికిత్సలు చూడండి',
+      'pred_chemical': 'రసాయన చికిత్స',
+      'pred_organic': 'సేంద్రీయ చికిత్స',
     },
   };
 
