@@ -87,7 +87,10 @@ def run_inference(image_path: str) -> dict:
     gap = top1_conf - float(preds[top2])
 
     if top1_conf < CONFIDENCE_THRESHOLD or gap < CONFIDENCE_GAP_THRESHOLD:
-        raise ValueError("Low confidence or ambiguous prediction")
+        raise ValueError(
+            f"Confidence too low ({top1_conf:.2f}) or ambiguous prediction. "
+            "The image may not be a clear plant/crop photo."
+        )
 
     label = idx_to_class[top1]
 

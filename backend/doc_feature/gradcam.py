@@ -26,6 +26,15 @@ IMG_SIZE = 224
 LAST_CONV_LAYER = "Conv_1"
 
 
+def _find_last_conv_layer(model):
+    """Find the last convolutional layer in the model."""
+    last_conv = None
+    for layer in model.layers:
+        if isinstance(layer, tf.keras.layers.Conv2D):
+            last_conv = layer.name
+    return last_conv or LAST_CONV_LAYER
+
+
 def _preprocess(image_path: str):
     if not CV2_AVAILABLE:
         raise ImportError("OpenCV not available")
@@ -45,39 +54,50 @@ def compute_gradcam(image_tensor, model):
         # Return dummy heatmap
         return np.zeros((IMG_SIZE, IMG_SIZE))  # type: ignore
 
-    last_conv = model.get_layer(LAST_CONV_LAYER)
+    try:
+        # Find the target conv layer
+        layer_name = _find_last_conv_layer(model)
+        last_conv = model.get_layer(layer_name)
 
-    grad_model = tf.keras.models.Model(
-        model.inputs,
-        [last_conv.output, model.output]
-    )
+        grad_model = tf.keras.models.Model(
+            model.inputs,
+            [last_conv.output, model.output]
+        )
 
-    with tf.GradientTape() as tape:
-        conv_out, preds = grad_model(image_tensor, training=False)
+        with tf.GradientTape() as tape:
+            conv_out, preds = grad_model(image_tensor, training=False)
 
-        # 🔒 Keras Functional safety
-        if isinstance(preds, list):
-            preds = preds[0]
+            # Keras Functional safety
+            if isinstance(preds, list):
+                preds = preds[0]
 
-        preds = tf.convert_to_tensor(preds)
+            preds = tf.convert_to_tensor(preds)
 
-        pred_class = tf.argmax(preds[0])
-        class_score = preds[:, pred_class]
+            pred_class = tf.argmax(preds[0])
+            class_score = preds[:, pred_class]
 
-    grads = tape.gradient(class_score, conv_out)
-    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+        grads = tape.gradient(class_score, conv_out)
+        
+        if grads is None:
+            print("Grad-CAM: gradients returned None, returning zero heatmap")
+            return np.zeros((IMG_SIZE, IMG_SIZE))  # type: ignore
 
-    heatmap = tf.reduce_sum(conv_out[0] * pooled_grads, axis=-1)
-    heatmap = tf.maximum(heatmap, 0)
+        pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
 
-    denom = tf.reduce_max(heatmap)
-    heatmap = tf.cond(
-        denom > 0,
-        lambda: heatmap / denom,
-        lambda: heatmap
-    )
+        heatmap = tf.reduce_sum(conv_out[0] * pooled_grads, axis=-1)
+        heatmap = tf.maximum(heatmap, 0)
 
-    return heatmap.numpy()
+        denom = tf.reduce_max(heatmap)
+        heatmap = tf.cond(
+            denom > 0,
+            lambda: heatmap / denom,
+            lambda: heatmap
+        )
+
+        return heatmap.numpy()
+    except Exception as e:
+        print(f"Grad-CAM computation failed: {e}. Returning zero heatmap.")
+        return np.zeros((IMG_SIZE, IMG_SIZE))  # type: ignore
 
 
 def gradcam_summary(heatmap) -> str:
@@ -99,12 +119,19 @@ def run_gradcam(image_path: str, cnn_output: dict, model) -> dict:
         }
         return cnn_output
 
-    image_tensor = _preprocess(image_path)
-    heatmap = compute_gradcam(image_tensor, model)
+    try:
+        image_tensor = _preprocess(image_path)
+        heatmap = compute_gradcam(image_tensor, model)
 
-    cnn_output["explainability"] = {
-        "method": "Grad-CAM",
-        "summary": gradcam_summary(heatmap)
-    }
+        cnn_output["explainability"] = {
+            "method": "Grad-CAM",
+            "summary": gradcam_summary(heatmap)
+        }
+    except Exception as e:
+        print(f"Grad-CAM failed: {e}. Using fallback explanation.")
+        cnn_output["explainability"] = {
+            "method": "CNN Analysis",
+            "summary": f"AI detected patterns consistent with {cnn_output.get('predicted_disease', 'unknown')} based on visual features."
+        }
 
     return cnn_output
