@@ -14,7 +14,7 @@ except Exception as e:
 
 
 # ---------------- CREATE POST ----------------
-def create_post(user_id: str, content: str, lat: float, lng: float) -> str:
+def create_post(user_id: str, content: str, lat: float, lng: float, image_url: str = None, analysis_data: dict = None, user_name: str = None) -> str:
     """
     Create a community post with normalized location.
     
@@ -23,12 +23,15 @@ def create_post(user_id: str, content: str, lat: float, lng: float) -> str:
         content: Post content
         lat: Latitude
         lng: Longitude
+        image_url: Optional URL to an uploaded image
+        analysis_data: Optional analysis/diagnosis data dict
+        user_name: Optional display name of the user
     
     Returns:
         Post document ID
     """
     # Import here to avoid circular dependency
-    from ..location.location_service import normalize_location
+    from location.location_service import normalize_location
     
     # Normalize location
     location = normalize_location(lat, lng)
@@ -36,15 +39,23 @@ def create_post(user_id: str, content: str, lat: float, lng: float) -> str:
     if db is None:
         return "mock_post_id"
     
-    doc_ref = db.collection("community").document()
-    doc_ref.set({
+    post_data = {
         "userId": user_id,
+        "userName": user_name or "Farmer",
         "content": content,
         "location": location,
         "likes": 0,
         "commentsCount": 0,
         "createdAt": datetime.utcnow()
-    })
+    }
+    
+    if image_url:
+        post_data["imageUrl"] = image_url
+    if analysis_data:
+        post_data["analysisData"] = analysis_data
+    
+    doc_ref = db.collection("community").document()
+    doc_ref.set(post_data)
     
     return doc_ref.id
 
@@ -61,7 +72,13 @@ def get_posts(limit: int = 20):
         .limit(limit)
         .stream()
     )
-    return [{"id": doc.id, **doc.to_dict()} for doc in posts]
+    posts_list = []
+    for doc in posts:
+        data = doc.to_dict()
+        if "createdAt" in data and hasattr(data["createdAt"], "isoformat"):
+            data["createdAt"] = data["createdAt"].isoformat()
+        posts_list.append({"id": doc.id, **data})
+    return posts_list
 
 
 # ---------------- ADD COMMENT ----------------
