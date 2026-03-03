@@ -2,16 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/crop_item.dart';
 import '../providers/language_provider.dart';
+import '../providers/user_provider.dart';
 import '../utils/translations.dart';
+import '../services/auth_service.dart';
 import 'home_screen.dart';
+
 class CropSelectScreen extends StatefulWidget {
   final List<CropItem> initialCrops;
   final bool isInitialSetup;
+  final String? mobileNumber; // Passed during initial registration
+  final String? userName;     // Passed during initial registration
 
   const CropSelectScreen({
     super.key, 
     required this.initialCrops, 
     this.isInitialSetup = false,
+    this.mobileNumber,
+    this.userName,
   });
 
   @override
@@ -55,6 +62,9 @@ class _CropSelectScreenState extends State<CropSelectScreen> {
     CropItem(nameKey: 'Spinach', imagePath: 'assets/images/spinach.png', color: Colors.green.shade200),
   ];
 
+  static const int _maxCrops = 5;
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -63,10 +73,65 @@ class _CropSelectScreenState extends State<CropSelectScreen> {
     }
   }
 
-  void _saveSelection() {
+  int get _selectedCount => _allCrops.where((c) => c.isSelected).length;
+
+  void _toggleCrop(CropItem crop) {
+    setState(() {
+      if (crop.isSelected) {
+        // Always allow deselecting
+        crop.isSelected = false;
+      } else {
+        // Only allow selecting if under the limit
+        if (_selectedCount < _maxCrops) {
+          crop.isSelected = true;
+        } else {
+          // Show max limit warning
+          final langCode = Provider.of<LanguageProvider>(context, listen: false).currentLocale;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppTranslations.getText(langCode, 'max_crops_warning')),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    });
+  }
+
+  void _saveSelection() async {
     final selectedCrops = _allCrops.where((c) => c.isSelected).toList();
+    final cropNames = selectedCrops.map((c) => c.nameKey).toList();
     
     if (widget.isInitialSetup) {
+      setState(() => _isLoading = true);
+
+      // Call AuthService.login with name, phone, and crops → syncs to backend DB
+      final loginSuccess = await AuthService.login(
+        widget.mobileNumber ?? '',
+        widget.userName ?? 'Farmer',
+        cropNames,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (loginSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login Successful!"), backgroundColor: Colors.green),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Saved locally. Will sync when online."), backgroundColor: Colors.blue),
+        );
+      }
+
+      // Update UserProvider with the new name and crops
+      if (mounted) {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        await userProvider.loadUserData();
+      }
+
       // Navigate to Home Screen and clear stack
       Navigator.pushAndRemoveUntil(
         context,
@@ -76,6 +141,15 @@ class _CropSelectScreenState extends State<CropSelectScreen> {
         (route) => false,
       );
     } else {
+      // Edit mode: save crops update to backend and locally
+      await AuthService.updateCrops(cropNames);
+      
+      // Update UserProvider
+      if (mounted) {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        await userProvider.loadUserData();
+      }
+
       // Just return the selected crops (Edit Mode)
       Navigator.pop(context, selectedCrops);
     }
@@ -102,10 +176,32 @@ class _CropSelectScreenState extends State<CropSelectScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              "Tap to select crops:",
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppTranslations.getText(langCode, 'tap_to_select_crops'),
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _selectedCount >= _maxCrops ? Colors.orange.shade50 : Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _selectedCount >= _maxCrops ? Colors.orange : Colors.green,
+                    ),
+                  ),
+                  child: Text(
+                    "$_selectedCount / $_maxCrops",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _selectedCount >= _maxCrops ? Colors.orange.shade800 : Colors.green.shade800,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -121,7 +217,7 @@ class _CropSelectScreenState extends State<CropSelectScreen> {
               itemBuilder: (context, index) {
                 final crop = _allCrops[index];
                 return GestureDetector(
-                  onTap: () => setState(() => crop.isSelected = !crop.isSelected),
+                  onTap: () => _toggleCrop(crop),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -196,16 +292,20 @@ class _CropSelectScreenState extends State<CropSelectScreen> {
               width: double.infinity, 
               height: 50,
               child: ElevatedButton(
-                onPressed: _saveSelection,
+                onPressed: _isLoading ? null : _saveSelection,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green, 
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 2,
                 ),
-                child: Text(
-                  AppTranslations.getText(langCode, 'save'), 
-                  style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : Text(
+                        widget.isInitialSetup
+                            ? AppTranslations.getText(langCode, 'continue_text')
+                            : AppTranslations.getText(langCode, 'save'), 
+                        style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
               ),
             ),
           ),
