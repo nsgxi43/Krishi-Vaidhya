@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
+import '../providers/user_provider.dart';
 import '../utils/translations.dart';
 import '../services/api_service.dart'; // Import API Service
 import 'result_screen.dart'; // Import Result Screen
@@ -32,12 +33,16 @@ class ImagePreviewScreen extends StatelessWidget {
 
     try {
       // 2. Upload to Backend
-      // TODO: Get actual user location if available. Using default for now.
+      // Get real user ID from UserProvider
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final userId = userProvider.phone.isNotEmpty ? userProvider.phone : "guest_user";
+      
+      // TODO: Get actual user location from device GPS if available
       final response = await ApiService.uploadImage(
         imagePath, 
-        "user_123", // Replace with real user ID from Provider if available
-        12.9716, // Default Lat (Bangalore)
-        77.5946  // Default Lng (Bangalore)
+        userId,
+        12.9716, // Default Lat (Bangalore) — ideally from device GPS
+        77.5946  // Default Lng (Bangalore) — ideally from device GPS
       );
 
       // 3. Close Loading Dialog
