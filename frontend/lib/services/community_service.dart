@@ -27,11 +27,12 @@ class CommunityService {
     }
   }
 
-  static Future<bool> createPost(String userId, String content, double lat, double lng, {String? imagePath, Map<String, dynamic>? analysisData}) async {
+  static Future<bool> createPost(String userId, String content, double lat, double lng, {String? imagePath, Map<String, dynamic>? analysisData, String? userName}) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/community/posts'));
       
       request.fields['userId'] = userId;
+      request.fields['userName'] = userName ?? 'Farmer';
       request.fields['content'] = content;
       request.fields['lat'] = lat.toString();
       request.fields['lng'] = lng.toString();

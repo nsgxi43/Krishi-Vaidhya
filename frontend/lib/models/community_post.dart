@@ -1,6 +1,7 @@
 class CommunityPost {
   final String id;
   final String userId;
+  final String userName;
   final String content;
   final Map<String, dynamic> location;
   final int likes;
@@ -13,6 +14,7 @@ class CommunityPost {
   CommunityPost({
     required this.id,
     required this.userId,
+    required this.userName,
     required this.content,
     required this.location,
     required this.likes,
@@ -23,10 +25,21 @@ class CommunityPost {
     this.analysisData,
   });
 
+  /// Human-readable location string: "Arkalgud, Hassan" or "Hassan" or ""
+  String get locationDisplay {
+    final village = location['village'] as String?;
+    final district = location['district'] as String?;
+    if (village != null && district != null) return '$village, $district';
+    if (district != null) return district;
+    if (village != null) return village;
+    return '';
+  }
+
   factory CommunityPost.fromJson(Map<String, dynamic> json) {
     return CommunityPost(
       id: json['id'] ?? '',
       userId: json['userId'] ?? '',
+      userName: json['userName'] ?? 'Farmer',
       content: json['content'] ?? '',
       location: json['location'] ?? {},
       likes: json['likes'] ?? 0,
