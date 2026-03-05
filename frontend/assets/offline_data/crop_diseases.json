@@ -1,0 +1,356 @@
+{
+  "Tomato": [
+    {
+      "diseaseName": "Tomato Early Blight",
+      "displayLabel": "Tomato Early Blight",
+      "isHealthy": false,
+      "diseaseOverview": "Early blight is a common fungal disease caused by Alternaria solani. It causes dark concentric lesions on older leaves, leading to defoliation and reduced yield.",
+      "whyThisPrediction": "Typical symptoms include target-board like dark spots with yellow halos on lower/older leaves.",
+      "chemicalTreatments": [
+        "Apply Mancozeb 75% WP at 2.5g/litre of water every 7-10 days.",
+        "Use Chlorothalonil 75% WP at 2g/litre as a preventive spray.",
+        "Apply Iprodione 50% WP at 1g/litre for curative treatment."
+      ],
+      "organicTreatments": [
+        "Spray Neem oil (3ml/litre) + Bordeaux mixture (1%) every 10 days.",
+        "Apply Trichoderma viride bio-fungicide as a soil drench.",
+        "Use baking soda solution (1 tsp per litre) as a foliar spray."
+      ],
+      "preventionTips": [
+        "Remove and destroy infected plant debris after harvest.",
+        "Maintain wide spacing between plants for good air circulation.",
+        "Avoid overhead irrigation; use drip irrigation.",
+        "Rotate crops — avoid planting tomato/potato in the same field for 2 years.",
+        "Use certified disease-resistant seeds."
+      ]
+    },
+    {
+      "diseaseName": "Tomato Late Blight",
+      "displayLabel": "Tomato Late Blight",
+      "isHealthy": false,
+      "diseaseOverview": "Late blight, caused by Phytophthora infestans, is a destructive disease affecting both foliage and fruit. It spreads rapidly in cool, moist conditions.",
+      "whyThisPrediction": "Water-soaked, greyish-green lesions on leaves that turn brown-black with white mold on the undersides are classic signs.",
+      "chemicalTreatments": [
+        "Apply Metalaxyl + Mancozeb (Ridomil Gold) at 2.5g/litre every 7 days.",
+        "Spray Cymoxanil + Mancozeb at 2g/litre.",
+        "Use Dimethomorph 50% WP at 1g/litre for systemic control."
+      ],
+      "organicTreatments": [
+        "Apply Copper oxychloride (3g/litre) as a protective spray.",
+        "Use Bordeaux mixture (1%) every 7-10 days.",
+        "Spray potassium bicarbonate solution (5g/litre) weekly."
+      ],
+      "preventionTips": [
+        "Avoid planting in low-lying, poorly-drained areas.",
+        "Ensure proper spacing and staking for ventilation.",
+        "Scout fields regularly especially during cool, humid weather.",
+        "Destroy volunteer tomato and potato plants.",
+        "Use resistant varieties like 'Pusa Hybrid' or 'Arka Rakshak'."
+      ]
+    },
+    {
+      "diseaseName": "Tomato Leaf Mold",
+      "displayLabel": "Tomato Leaf Mold",
+      "isHealthy": false,
+      "diseaseOverview": "Leaf mold (Passalora fulva) causes pale greenish-yellow patches on upper leaf surfaces and olive-green to grayish-purple mold on the undersides.",
+      "whyThisPrediction": "Olive-green or grayish-brown velvety growth on the lower leaf surface with yellow patches above are hallmarks of this disease.",
+      "chemicalTreatments": [
+        "Apply Chlorothalonil 75% WP at 2g/litre every 10 days.",
+        "Spray Difenoconazole 25% EC at 0.5ml/litre.",
+        "Use Mancozeb 75% WP at 2.5g/litre as protective spray."
+      ],
+      "organicTreatments": [
+        "Spray diluted neem oil (5ml/litre) every 7 days.",
+        "Apply baking soda + soap solution (1 tsp/litre + few drops soap).",
+        "Improve ventilation to reduce humidity around plants."
+      ],
+      "preventionTips": [
+        "Maintain greenhouse humidity below 85%.",
+        "Remove and destroy infected leaves immediately.",
+        "Avoid wetting foliage during irrigation.",
+        "Plant resistant varieties such as 'Stirling' or 'Ferline'.",
+        "Disinfect tools and equipment regularly."
+      ]
+    },
+    {
+      "diseaseName": "Tomato Healthy",
+      "displayLabel": "Tomato — Healthy",
+      "isHealthy": true,
+      "diseaseOverview": "Your tomato crop appears healthy. No disease symptoms detected.",
+      "whyThisPrediction": "Leaves show uniform green color with no spots, lesions, or discoloration.",
+      "chemicalTreatments": [],
+      "organicTreatments": [],
+      "preventionTips": [
+        "Continue regular scouting every 3-5 days.",
+        "Maintain balanced fertilization (NPK).",
+        "Ensure consistent watering to prevent blossom end rot.",
+        "Apply preventive neem oil spray every 14 days.",
+        "Keep field free of weeds to reduce pest pressure."
+      ]
+    }
+  ],
+  "Potato": [
+    {
+      "diseaseName": "Potato Early Blight",
+      "displayLabel": "Potato Early Blight",
+      "isHealthy": false,
+      "diseaseOverview": "Caused by Alternaria solani, potato early blight produces dark, concentric ring-patterned lesions on older leaves, reducing photosynthesis and tuber yield.",
+      "whyThisPrediction": "Dark brown, circular to oval spots with concentric rings (target-board pattern) on lower/mature leaves are the key symptom.",
+      "chemicalTreatments": [
+        "Spray Mancozeb 75% WP at 2.5g/litre at 10-day intervals.",
+        "Apply Azoxystrobin 23% SC at 1ml/litre for systemic control.",
+        "Use Tebuconazole 25.9% EC at 1ml/litre for curative treatment."
+      ],
+      "organicTreatments": [
+        "Apply Bordeaux mixture (1%) every 10-14 days.",
+        "Spray Trichoderma harzianum bio-fungicide at 5g/litre.",
+        "Use neem-based formulations (Azadirachtin 0.03%) every 7 days."
+      ],
+      "preventionTips": [
+        "Use certified, disease-free seed tubers.",
+        "Maintain proper plant spacing (45cm x 20cm).",
+        "Avoid excessive nitrogen fertilization.",
+        "Practice 3-year crop rotation with non-solanaceous crops.",
+        "Destroy crop debris after harvest by deep plowing."
+      ]
+    },
+    {
+      "diseaseName": "Potato Late Blight",
+      "displayLabel": "Potato Late Blight",
+      "isHealthy": false,
+      "diseaseOverview": "The most devastating potato disease, caused by Phytophthora infestans. Under favorable conditions, it can destroy an entire crop within 7-10 days.",
+      "whyThisPrediction": "Water-soaked, rapidly expanding lesions on leaves with white sporulation on leaf undersides during humid conditions are diagnostic.",
+      "chemicalTreatments": [
+        "Apply Metalaxyl 8% + Mancozeb 64% WP at 2.5g/litre every 7 days.",
+        "Spray Cymoxanil 8% + Mancozeb 64% WP at 3g/litre.",
+        "Use Fenamidone 10% + Mancozeb 50% WG at 3g/litre."
+      ],
+      "organicTreatments": [
+        "Apply Copper hydroxide at 3g/litre as a preventive measure.",
+        "Use Bordeaux mixture (1%) weekly during high-risk periods.",
+        "Spray potassium phosphonate (5ml/litre) for resistance induction."
+      ],
+      "preventionTips": [
+        "Plant certified late-blight-resistant varieties (e.g., Kufri Jyoti).",
+        "Avoid planting near tomato fields.",
+        "Hill up plants to protect tubers from infection.",
+        "Monitor weather forecasts — spray before rain/fog spells.",
+        "Destroy all infected plant material; do not compost."
+      ]
+    },
+    {
+      "diseaseName": "Potato Healthy",
+      "displayLabel": "Potato — Healthy",
+      "isHealthy": true,
+      "diseaseOverview": "Your potato crop appears healthy. No disease symptoms detected.",
+      "whyThisPrediction": "Foliage shows normal dark green color with no spots, lesions, or wilting.",
+      "chemicalTreatments": [],
+      "organicTreatments": [],
+      "preventionTips": [
+        "Continue hilling up soil around plants for tuber protection.",
+        "Maintain regular irrigation, especially during tuber initiation.",
+        "Scout for aphids (late blight virus vectors) regularly.",
+        "Apply balanced fertilizer as per soil test recommendations.",
+        "Keep field edges free of weeds and volunteer plants."
+      ]
+    }
+  ],
+  "Corn": [
+    {
+      "diseaseName": "Corn Common Rust",
+      "displayLabel": "Corn Common Rust",
+      "isHealthy": false,
+      "diseaseOverview": "Common rust (Puccinia sorghi) produces cinnamon-brown pustules scattered on both leaf surfaces. Severe infections reduce photosynthesis and grain fill.",
+      "whyThisPrediction": "Small, circular to elongated cinnamon-brown powdery pustules on upper and lower leaf surfaces are the classic symptom.",
+      "chemicalTreatments": [
+        "Apply Propiconazole 25% EC at 1ml/litre at first symptom appearance.",
+        "Spray Tebuconazole 25.9% EC at 0.5ml/litre every 14 days.",
+        "Use Azoxystrobin 23% SC at 1ml/litre for systemic control."
+      ],
+      "organicTreatments": [
+        "Apply sulfur dust (20-30 kg/ha) during early infection.",
+        "Spray neem oil (5ml/litre) + copper soap every 10 days.",
+        "Use Bacillus subtilis biofungicide as a foliar spray."
+      ],
+      "preventionTips": [
+        "Plant resistant hybrids — check local recommended varieties.",
+        "Avoid late planting which coincides with humid conditions.",
+        "Maintain adequate plant spacing for airflow.",
+        "Monitor regularly during periods of high humidity.",
+        "Avoid excessive nitrogen that promotes lush foliage."
+      ]
+    },
+    {
+      "diseaseName": "Corn Northern Leaf Blight",
+      "displayLabel": "Corn Northern Leaf Blight",
+      "isHealthy": false,
+      "diseaseOverview": "Caused by Exserohilum turcicum, Northern Leaf Blight produces long cigar-shaped lesions that can coalesce and kill large portions of leaves.",
+      "whyThisPrediction": "Long (5-15cm), elliptical, tan/grey-green cigar-shaped lesions on leaves are the hallmark symptom.",
+      "chemicalTreatments": [
+        "Spray Mancozeb 75% WP at 2.5g/litre preventively from tasselling.",
+        "Apply Propiconazole 25% EC at 1ml/litre at disease onset.",
+        "Use Carbendazim 50% WP at 1g/litre as a curative spray."
+      ],
+      "organicTreatments": [
+        "Apply Trichoderma viride bio-fungicide at 5g/litre as a foliar spray.",
+        "Use neem kernel extract (5%) spray every 7-10 days.",
+        "Apply Bordeaux mixture (0.5%) at early stages."
+      ],
+      "preventionTips": [
+        "Use resistant hybrids with Ht1 or Ht2 genes.",
+        "Rotate with non-host crops like legumes or wheat.",
+        "Plow under infected debris after harvest.",
+        "Avoid dense planting — follow recommended spacing.",
+        "Ensure balanced crop nutrition, especially potassium."
+      ]
+    },
+    {
+      "diseaseName": "Corn Healthy",
+      "displayLabel": "Corn — Healthy",
+      "isHealthy": true,
+      "diseaseOverview": "Your corn crop appears healthy. No disease symptoms detected.",
+      "whyThisPrediction": "Leaves are uniformly green with no lesions, pustules, or abnormal discoloration.",
+      "chemicalTreatments": [],
+      "organicTreatments": [],
+      "preventionTips": [
+        "Monitor for fall armyworm, especially at whorl stage.",
+        "Ensure adequate zinc and boron nutrition for healthy growth.",
+        "Scout fields twice a week during vegetative stages.",
+        "Maintain proper irrigation during tasselling and grain fill.",
+        "Weed control is critical in the first 30 days after sowing."
+      ]
+    }
+  ],
+  "Wheat": [
+    {
+      "diseaseName": "Wheat Yellow Rust",
+      "displayLabel": "Wheat Yellow Rust",
+      "isHealthy": false,
+      "diseaseOverview": "Yellow rust (stripe rust), caused by Puccinia striiformis, is one of the most damaging wheat diseases in cooler regions. It can cause yield losses up to 70%.",
+      "whyThisPrediction": "Bright yellow-orange pustules arranged in stripes along leaf veins, giving a striped appearance, are the defining symptom.",
+      "chemicalTreatments": [
+        "Apply Propiconazole 25% EC at 1ml/litre at first appearance.",
+        "Spray Tebuconazole 250 EW at 1ml/litre every 14 days.",
+        "Use Trifloxystrobin + Tebuconazole (Nativo) at 0.5g/litre."
+      ],
+      "organicTreatments": [
+        "Apply sulfur-based fungicides (Sulfex 80% WG) at 3g/litre.",
+        "Spray potassium silicate solution to enhance plant resistance.",
+        "Use garlic extract spray (50g/litre) as a preventive measure."
+      ],
+      "preventionTips": [
+        "Grow resistant varieties such as HD 2967, GW 496, or WH 1105.",
+        "Sow at recommended time — delayed sowing increases rust risk.",
+        "Monitor fields from tillering stage onwards.",
+        "Avoid excessive nitrogen fertilization.",
+        "Scout neighboring fields as spores travel on wind."
+      ]
+    },
+    {
+      "diseaseName": "Wheat Powdery Mildew",
+      "displayLabel": "Wheat Powdery Mildew",
+      "isHealthy": false,
+      "diseaseOverview": "Powdery mildew (Blumeria graminis) appears as white powdery patches on leaves and stems. It thrives in cool, humid conditions and reduces grain quality.",
+      "whyThisPrediction": "White to grey powdery fungal colonies on upper leaf surfaces, sheaths, and stems are the primary symptom.",
+      "chemicalTreatments": [
+        "Spray Triadimefon 25% WP at 1g/litre at first symptom.",
+        "Apply Propiconazole 25% EC at 1ml/litre every 14 days.",
+        "Use Kresoxim-methyl 44.3% SC at 0.5ml/litre for systemic action."
+      ],
+      "organicTreatments": [
+        "Apply sulfur dust (20kg/ha) at early infection stage.",
+        "Spray diluted milk (1:9 ratio) — fatty acids inhibit spore germination.",
+        "Use potassium bicarbonate spray (5g/litre) every 7 days."
+      ],
+      "preventionTips": [
+        "Use resistant varieties suited to your region.",
+        "Avoid dense planting — follow spacing of 20-22.5cm row spacing.",
+        "Balanced fertilization — avoid excess nitrogen.",
+        "Timely sowing reduces risk as crop escapes favorable conditions.",
+        "Remove and destroy heavily infected plant material."
+      ]
+    },
+    {
+      "diseaseName": "Wheat Healthy",
+      "displayLabel": "Wheat — Healthy",
+      "isHealthy": true,
+      "diseaseOverview": "Your wheat crop appears healthy. No disease symptoms detected.",
+      "whyThisPrediction": "Crop shows uniform dark green leaves, erect tillers, and no visible pustules, spots, or mold growth.",
+      "chemicalTreatments": [],
+      "organicTreatments": [],
+      "preventionTips": [
+        "Apply second dose of nitrogen fertilizer at tillering stage.",
+        "Maintain recommended plant population density.",
+        "Scout for aphids and yellow dwarf virus weekly.",
+        "Ensure adequate irrigation at crown root initiation and heading.",
+        "Keep field edges weeded to reduce rust inoculum."
+      ]
+    }
+  ],
+  "Rice": [
+    {
+      "diseaseName": "Rice Blast",
+      "displayLabel": "Rice Blast",
+      "isHealthy": false,
+      "diseaseOverview": "Rice blast (Magnaporthe oryzae) is the most devastating rice disease worldwide. It can affect leaves, collar, nodes, and panicles at all growth stages.",
+      "whyThisPrediction": "Diamond/spindle-shaped lesions with grey/white centers and brown borders on leaves, or blackening of the neck (neck rot) are diagnostic.",
+      "chemicalTreatments": [
+        "Spray Tricyclazole 75% WP at 0.6g/litre at first symptom.",
+        "Apply Isoprothiolane 40% EC at 1.5ml/litre every 10-14 days.",
+        "Use Carbendazim 50% WP at 1g/litre for early infections."
+      ],
+      "organicTreatments": [
+        "Apply silicon (sodium silicate, 2g/litre) as a resistance inducer.",
+        "Spray Pseudomonas fluorescens bio-agent at 5g/litre.",
+        "Use Trichoderma asperellum at 5g/litre as foliar spray."
+      ],
+      "preventionTips": [
+        "Use blast-resistant varieties (IR64, Swarna, Pusa Basmati 1).",
+        "Avoid excessive nitrogen — split application reduces risk.",
+        "Maintain 5cm standing water to reduce leaf wetness.",
+        "Do not transplant seedlings older than 30 days.",
+        "Seed treatment with Trichoderma before sowing."
+      ]
+    },
+    {
+      "diseaseName": "Rice Brown Spot",
+      "displayLabel": "Rice Brown Spot",
+      "isHealthy": false,
+      "diseaseOverview": "Brown spot disease (Bipolaris oryzae) is linked to nutrient-deficient soils. It causes small round brown lesions on leaves and glumes, reducing grain quality.",
+      "whyThisPrediction": "Small, circular to oval brown lesions with a light brown center surrounded by a dark brown border on leaves are the hallmark symptom.",
+      "chemicalTreatments": [
+        "Seed treatment with Captan 75% WS at 2.5g/kg seed.",
+        "Foliar spray of Mancozeb 75% WP at 2.5g/litre.",
+        "Apply Propiconazole 25% EC at 1ml/litre at booting/heading stage."
+      ],
+      "organicTreatments": [
+        "Apply potassium fertilizer (MOP at 60kg/ha) to reduce susceptibility.",
+        "Spray micronutrient mixture (manganese + zinc) to boost plant immunity.",
+        "Use Neem cake soil application at 250kg/ha."
+      ],
+      "preventionTips": [
+        "Conduct soil testing and correct nutrient deficiencies.",
+        "Ensure adequate potassium and silicon nutrition.",
+        "Use clean, certified, disease-free seeds.",
+        "Maintain optimum plant population.",
+        "Drain and dry field periodically to improve soil aeration."
+      ]
+    },
+    {
+      "diseaseName": "Rice Healthy",
+      "displayLabel": "Rice — Healthy",
+      "isHealthy": true,
+      "diseaseOverview": "Your rice crop appears healthy. No disease symptoms detected.",
+      "whyThisPrediction": "Crop shows uniform erect tillers with deep green, smooth leaves and no visible lesions or discoloration.",
+      "chemicalTreatments": [],
+      "organicTreatments": [],
+      "preventionTips": [
+        "Scout weekly for stem borer and leaf folder pests.",
+        "Maintain 2-5cm water level during vegetative stage.",
+        "Apply top-dressing nitrogen at active tillering stage.",
+        "Pull out and destroy any rogues or off-type plants.",
+        "Drain field 10 days before harvest for proper ripening."
+      ]
+    }
+  ]
+}
