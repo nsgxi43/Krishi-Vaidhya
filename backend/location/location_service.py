@@ -156,8 +156,21 @@ def normalize_location(lat: float, lng: float) -> dict:
     }
     """
     try:
-        # Reverse geocode using Google API
-        geo_json = reverse_geocode(lat, lng)
+        # Reverse geocode using Google API with retry
+        max_retries = 2
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                geo_json = reverse_geocode(lat, lng)
+                break
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    print(f"Location API retry {attempt + 1}/{max_retries}")
+                    continue
+                else:
+                    raise e
         
         # Extract components
         location = extract_location_components(geo_json)
@@ -185,7 +198,6 @@ def normalize_location(lat: float, lng: float) -> dict:
             "lng": lng,
             "state": None,
             "district": None,
-            "village": None,
             "village": None,
             "geohash": gh.encode(lat, lng, precision=5) if gh else "00000"
         }
