@@ -15,11 +15,13 @@ import 'remedies_screen.dart';
 class ResultScreen extends StatelessWidget {
   final String imagePath;
   final DiagnosisResponse response;
+  final bool isOffline;
 
   const ResultScreen({
     super.key,
     required this.imagePath,
     required this.response,
+    this.isOffline = false,
   });
 
   @override
@@ -44,6 +46,30 @@ class ResultScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // --- Offline Banner ---
+            if (isOffline)
+              Container(
+                color: const Color(0xFFFFF8E1),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 10),
+                child: const Row(
+                  children: [
+                    Icon(Icons.wifi_off_rounded,
+                        color: Color(0xFFF57F17), size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Offline mode — results based on pre-loaded crop data, not AI analysis',
+                        style: TextStyle(
+                            color: Color(0xFFF57F17),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // --- Image Section ---
             Container(
               height: 250,
@@ -407,6 +433,7 @@ class ResultScreen extends StatelessWidget {
                 content,
                 0.0, // Should use real location if available
                 0.0,
+                userName: userProvider.name,
                 imagePath: imagePath,
                 analysisData: {
                   'crop': response.crop,
