@@ -3,8 +3,10 @@ import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
+import '../providers/user_provider.dart';
 import '../utils/translations.dart';
 import '../services/api_service.dart'; // Import API Service
+import '../services/offline_service.dart';
 import 'result_screen.dart'; // Import Result Screen
 
 class ImagePreviewScreen extends StatelessWidget {
@@ -14,6 +16,15 @@ class ImagePreviewScreen extends StatelessWidget {
 
   // LOGIC: Analyze the image using Backend (Gemini/CNN)
   Future<void> _analyzeImage(BuildContext context) async {
+    // ── Check connectivity first ──────────────────────────────────────────
+    final online = await OfflineService.isOnline();
+
+    if (!online) {
+      await _analyzeImageOffline(context);
+      return;
+    }
+
+    // ── Online flow (unchanged) ───────────────────────────────────────────
     // 1. Show Loading Indicator
     showDialog(
       context: context,
@@ -32,19 +43,20 @@ class ImagePreviewScreen extends StatelessWidget {
 
     try {
       // 2. Upload to Backend
-      // TODO: Get actual user location if available. Using default for now.
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final userId = userProvider.phone.isNotEmpty ? userProvider.phone : "guest_user";
+
       final response = await ApiService.uploadImage(
-        imagePath, 
-        "user_123", // Replace with real user ID from Provider if available
-        12.9716, // Default Lat (Bangalore)
-        77.5946  // Default Lng (Bangalore)
+        imagePath,
+        userId,
+        12.9716,
+        77.5946,
       );
 
       // 3. Close Loading Dialog
       if (context.mounted) Navigator.pop(context);
 
       if (response != null) {
-        // 4. Success! Go to Result Screen
         if (context.mounted) {
           Navigator.push(
             context,
@@ -55,7 +67,6 @@ class ImagePreviewScreen extends StatelessWidget {
           );
         }
       } else {
-        // AI returned nothing (Model might be missing or image is invalid)
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -66,30 +77,29 @@ class ImagePreviewScreen extends StatelessWidget {
         }
       }
     } catch (e) {
-      // Handle crashes/errors
       if (context.mounted) {
         Navigator.pop(context); // Close loading dialog
-        
-        // Extract user-friendly error message
+
         String errorMessage = "Analysis failed. Please try again.";
         bool isNotPlantError = false;
-        
-        if (e.toString().contains("Not a Plant Image") || e.toString().contains("not appear to be")) {
+
+        if (e.toString().contains("Not a Plant Image") ||
+            e.toString().contains("not appear to be")) {
           isNotPlantError = true;
-          errorMessage = "The uploaded image does not appear to be a clear plant/crop image.";
+          errorMessage =
+              "The uploaded image does not appear to be a clear plant/crop image.";
         } else if (e.toString().contains("Exception:")) {
-          // Extract message after "Exception: "
           errorMessage = e.toString().replaceFirst("Exception: ", "");
         }
-        
-        // Show prominent dialog for non-plant images
+
         if (isNotPlantError) {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
               title: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+                  Icon(Icons.warning_amber_rounded,
+                      color: Colors.orange, size: 28),
                   SizedBox(width: 8),
                   Text("Not a Plant Image"),
                 ],
@@ -98,10 +108,7 @@ class ImagePreviewScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    errorMessage,
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  Text(errorMessage, style: TextStyle(fontSize: 16)),
                   SizedBox(height: 16),
                   Container(
                     padding: EdgeInsets.all(12),
@@ -115,15 +122,13 @@ class ImagePreviewScreen extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.lightbulb_outline, color: Colors.green, size: 20),
+                            Icon(Icons.lightbulb_outline,
+                                color: Colors.green, size: 20),
                             SizedBox(width: 8),
-                            Text(
-                              "Tips for best results:",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green.shade800,
-                              ),
-                            ),
+                            Text("Tips for best results:",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green.shade800)),
                           ],
                         ),
                         SizedBox(height: 8),
@@ -139,16 +144,16 @@ class ImagePreviewScreen extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(ctx); // Close dialog
-                    Navigator.pop(context); // Go back to camera
+                    Navigator.pop(ctx);
+                    Navigator.pop(context);
                   },
-                  child: Text("Retake Photo", style: TextStyle(fontSize: 16)),
+                  child:
+                      Text("Retake Photo", style: TextStyle(fontSize: 16)),
                 ),
               ],
             ),
           );
         } else {
-          // Show SnackBar for other errors
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(errorMessage),
@@ -158,6 +163,123 @@ class ImagePreviewScreen extends StatelessWidget {
           );
         }
       }
+    }
+  }
+
+  // ── Offline diagnosis ─────────────────────────────────────────────────────
+  static const List<String> _offlineCrops = [
+    'Tomato',
+    'Potato',
+    'Corn',
+    'Wheat',
+    'Rice',
+  ];
+
+  Future<void> _analyzeImageOffline(BuildContext context) async {
+    // Step 1: Let user pick the crop
+    final String? selectedCrop = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.wifi_off_rounded, color: Color(0xFFF57F17), size: 22),
+            SizedBox(width: 8),
+            Text('Offline Mode', style: TextStyle(fontSize: 18)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "No internet connection. Select your crop to get pre-loaded disease information:",
+              style: TextStyle(fontSize: 14, color: Colors.black54),
+            ),
+            const SizedBox(height: 16),
+            ..._offlineCrops.map(
+              (crop) => ListTile(
+                dense: true,
+                leading:
+                    const Icon(Icons.eco, color: Colors.green, size: 20),
+                title: Text(crop,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                onTap: () => Navigator.pop(ctx, crop),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedCrop == null || !context.mounted) return;
+
+    // Step 2: Show disease picker for the selected crop
+    final diseases =
+        await OfflineService.getDiseasesForCrop(selectedCrop);
+    if (diseases.isEmpty || !context.mounted) return;
+
+    final Map<String, dynamic>? selectedDisease =
+        await showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text('Select symptom — $selectedCrop',
+            style: const TextStyle(fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: diseases
+              .map(
+                (d) => ListTile(
+                  dense: true,
+                  leading: Icon(
+                    (d['isHealthy'] as bool? ?? false)
+                        ? Icons.check_circle_outline
+                        : Icons.bug_report_outlined,
+                    color: (d['isHealthy'] as bool? ?? false)
+                        ? Colors.green
+                        : Colors.red,
+                    size: 20,
+                  ),
+                  title: Text(d['displayLabel'] ?? d['diseaseName'],
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () => Navigator.pop(ctx, d),
+                ),
+              )
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedDisease == null || !context.mounted) return;
+
+    // Step 3: Build offline DiagnosisResponse and navigate to ResultScreen
+    final response = OfflineService.buildOfflineDiagnosisResponse(
+        selectedDisease, selectedCrop);
+
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ResultScreen(
+            imagePath: imagePath,
+            response: response,
+            isOffline: true,
+          ),
+        ),
+      );
     }
   }
 
