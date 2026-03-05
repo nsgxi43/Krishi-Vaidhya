@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/diagnosis_response.dart';
+import '../models/prediction_alert.dart';
 
 class ApiService {
   static String get baseUrl {
@@ -172,6 +173,32 @@ class ApiService {
     } catch (e) {
       print("Weather fetch error: $e");
       return null;
+    }
+  }
+
+  // --- PREDICTIVE ANALYSIS ---
+  static Future<PredictionResponse?> fetchPredictionAlerts(String userId, double lat, double lng) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/prediction/alerts'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "userId": userId,
+          "lat": lat,
+          "lng": lng,
+        }),
+      ).timeout(const Duration(seconds: 60));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return PredictionResponse.fromJson(data);
+      } else {
+        print("Prediction fetch failed: ${response.statusCode} - ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("Prediction fetch error: $e");
+      rethrow;
     }
   }
 }
