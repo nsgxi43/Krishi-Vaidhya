@@ -1,31 +1,22 @@
 # Core Dependencies
 Flask>=2.3.0
-numpy>=1.24.0
-opencv-python>=4.8.0
-tensorflow>=2.13.0
-keras>=2.13.0
-scikit-learn>=1.3.0
-matplotlib>=3.7.0
-
-# Firebase
-firebase-admin>=6.2.0
-
-# API & Networking
 flask-cors>=4.0.0
 requests>=2.31.0
 python-dotenv>=1.0.0
 
+# ML / Computer Vision
+numpy>=1.24.0
+opencv-python>=4.8.0
+tensorflow>=2.13.0
+
+# Firebase
+firebase-admin>=6.2.0
+
 # Google Cloud & Authentication
 google-auth>=2.23.0
-google-auth-oauthlib>=1.1.0
-google-auth-httplib2>=0.1.1
 
 # Geolocation
 python-geohash>=0.8.5
 
-# Background Jobs (Optional - for automated reminders)
-APScheduler>=3.10.4
-
 # Testing (Optional)
 pytest>=7.4.0
-pytest-cov>=4.1.0
