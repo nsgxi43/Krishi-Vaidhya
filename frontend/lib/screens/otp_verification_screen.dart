@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'crop_select_screen.dart'; 
+import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../providers/user_provider.dart';
+import '../models/crop_item.dart';
+import 'name_input_screen.dart';
+import 'home_screen.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String mobileNumber;
@@ -42,31 +46,60 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     // COMPARE ENTERED OTP WITH GENERATED OTP
     if (enteredOtp == widget.generatedOtp.toString()) {
-      // CALL AUTH SERVICE TO LOGIN AND SYNC WITH DB
-      final loginSuccess = await AuthService.login(widget.mobileNumber);
+      setState(() => _isLoading = true);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("OTP Verified!"), backgroundColor: Colors.green),
+      );
+
+      // Check if this phone is a returning user
+      final returning = await AuthService.isReturningUser(widget.mobileNumber);
+
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (loginSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login Successful!"), backgroundColor: Colors.green),
+      if (returning) {
+        // Reload profile into provider and skip name/crop setup
+        final profile = await AuthService.getProfile();
+        if (!mounted) return;
+
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        userProvider.updateProfile(
+          profile['name'] ?? 'Farmer',
+          profile['phone'] ?? widget.mobileNumber,
+          profile['location'] ?? '',
+        );
+        final savedCrops = (profile['crops'] as List<dynamic>? ?? []).cast<String>();
+        userProvider.updateCrops(savedCrops);
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              initialCrops: savedCrops
+                  .map((c) => CropItem(
+                        nameKey: c,
+                        imagePath: 'assets/images/${c.toLowerCase()}.png',
+                        color: Colors.green.shade50,
+                        isSelected: true,
+                      ))
+                  .toList(),
+            ),
+          ),
+          (route) => false,
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login synced with offline local storage."), backgroundColor: Colors.blue),
+        // New user — collect name & crops
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NameInputScreen(
+              mobileNumber: widget.mobileNumber,
+            ),
+          ),
+          (route) => false,
         );
       }
-
-      // Navigate to Crop Selection Screen
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const CropSelectScreen(
-            initialCrops: [], 
-            isInitialSetup: true
-          )
-        ),
-        (route) => false,
-      );
     } else {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
