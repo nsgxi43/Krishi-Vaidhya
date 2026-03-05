@@ -24,8 +24,7 @@ dependencies:
   # --- Camera & Gallery ---
   camera: ^0.10.5
   permission_handler: ^11.0.1
-  # We keep the NEW version here
-  image_picker: ^1.1.2    
+  image_picker: ^1.0.7
 
   # --- AI Engine ---
   flutter_tflite: ^1.0.1
@@ -47,7 +46,7 @@ dev_dependencies:
 
 # --- THE FIX IS HERE ---
 dependency_overrides:
-  image_picker: ^1.1.2
+  image_picker: 1.0.7
 
 flutter:
   uses-material-design: true
@@ -57,3 +56,4 @@ flutter:
     - assets/images/
     - assets/model/model.tflite
     - assets/model/labels.txt
+    - assets/offline_data/crop_diseases.json
