@@ -5,6 +5,7 @@ import '../models/crop_item.dart';
 import '../providers/language_provider.dart';
 import '../utils/translations.dart';
 import '../services/calendar_service.dart';
+import '../services/offline_service.dart';
 import '../providers/user_provider.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -31,6 +32,8 @@ class _CropCalendarScreenState extends State<CropCalendarScreen> {
 
   List<dynamic> _lifecycle = [];
   bool _isLoading = false;
+  bool _isOfflineCache = false;
+  String? _cachedAt;
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -138,6 +141,35 @@ class _CropCalendarScreenState extends State<CropCalendarScreen> {
             ),
             
             const SizedBox(height: 20),
+
+            // --- Offline cache badge ---
+            if (_isGenerated && _isOfflineCache)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFFE082)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.wifi_off_rounded,
+                        color: Color(0xFFF57F17), size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Showing cached calendar${_cachedAt != null ? ' — saved $_cachedAt' : ''}. Go online to refresh.',
+                        style: const TextStyle(
+                            color: Color(0xFFF57F17),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             // --- 2. Timeline List ---
             if (_isGenerated) ...[
@@ -247,10 +279,48 @@ class _CropCalendarScreenState extends State<CropCalendarScreen> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final sowingDateStr = DateFormat('yyyy-MM-dd').format(_sowingDate);
 
-    // Get Location
+    // ── Check connectivity ──────────────────────────────────────────────
+    final online = await OfflineService.isOnline();
+
+    if (!online) {
+      // Try to load cached calendar for this crop
+      final cached =
+          await OfflineService.getCachedCalendar(_selectedCrop!.nameKey);
+      if (cached != null) {
+        final calendarData = cached['data'] as Map<String, dynamic>;
+        final rawCachedAt = cached['cachedAt'] as String?;
+        String? formattedDate;
+        if (rawCachedAt != null) {
+          final dt = DateTime.tryParse(rawCachedAt);
+          if (dt != null) {
+            formattedDate = DateFormat('d MMM yyyy').format(dt);
+          }
+        }
+        if (!mounted) return;
+        setState(() {
+          _lifecycle = calendarData['calendar']?['lifecycle'] ?? [];
+          _isGenerated = _lifecycle.isNotEmpty;
+          _isOfflineCache = true;
+          _cachedAt = formattedDate;
+          _isLoading = false;
+        });
+      } else {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'You\'re offline and no cached calendar exists for ${_selectedCrop!.nameKey}. Generate one online first.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    // ── Online: generate fresh calendar ────────────────────────────────
     double lat = 0.0;
     double lng = 0.0;
-    
     try {
       final position = await _getCurrentLocation();
       if (position != null) {
@@ -261,25 +331,65 @@ class _CropCalendarScreenState extends State<CropCalendarScreen> {
       print("Error getting location: $e");
     }
 
+    if (!mounted) return;
     final result = await CalendarService.generateCalendar(
       userId: userProvider.phone,
-      crop: _selectedCrop!.nameKey, 
+      crop: _selectedCrop!.nameKey,
       sowingDate: sowingDateStr,
       lat: lat,
       lng: lng,
     );
 
     if (result != null && result['calendar'] != null) {
+      // Cache the result for offline use
+      await OfflineService.cacheCalendar(_selectedCrop!.nameKey, result);
+
+      if (!mounted) return;
       setState(() {
         _lifecycle = result['calendar']['lifecycle'];
         _isGenerated = true;
+        _isOfflineCache = false;
+        _cachedAt = null;
         _isLoading = false;
       });
     } else {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to generate schedule")),
-      );
+      // API call failed — try falling back to cached version
+      final cached =
+          await OfflineService.getCachedCalendar(_selectedCrop!.nameKey);
+      if (cached != null) {
+        final calendarData = cached['data'] as Map<String, dynamic>;
+        final rawCachedAt = cached['cachedAt'] as String?;
+        String? formattedDate;
+        if (rawCachedAt != null) {
+          final dt = DateTime.tryParse(rawCachedAt);
+          if (dt != null) {
+            formattedDate = DateFormat('d MMM yyyy').format(dt);
+          }
+        }
+        if (!mounted) return;
+        setState(() {
+          _lifecycle = calendarData['calendar']?['lifecycle'] ?? [];
+          _isGenerated = _lifecycle.isNotEmpty;
+          _isOfflineCache = true;
+          _cachedAt = formattedDate;
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not reach server — showing cached calendar.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Failed to generate schedule. Check your connection and try again.'),
+          ),
+        );
+      }
     }
   }
 }
