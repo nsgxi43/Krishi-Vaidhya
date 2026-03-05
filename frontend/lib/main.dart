@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart'; // Import this
 import 'providers/language_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/connectivity_provider.dart';
 import 'screens/language_screen.dart';
 
 void main() async { // Make main async
@@ -15,6 +16,7 @@ void main() async { // Make main async
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
       ],
       child: const MyApp(),
     ),
