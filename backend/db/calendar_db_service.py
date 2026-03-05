@@ -22,13 +22,19 @@ def save_calendar(calendar: dict) -> str:
         print("Database not available. Returning mock ID.")
         return "mock_calendar_id_123"
 
-    # Add timestamps
-    calendar["createdAt"] = firestore.SERVER_TIMESTAMP
-    calendar["updatedAt"] = firestore.SERVER_TIMESTAMP
+    # Create a copy for Firestore with SERVER_TIMESTAMP
+    calendar_for_db = calendar.copy()
+    calendar_for_db["createdAt"] = firestore.SERVER_TIMESTAMP
+    calendar_for_db["updatedAt"] = firestore.SERVER_TIMESTAMP
     
     # Save to Firestore
     ref = db.collection("calendars").document()
-    ref.set(calendar)
+    ref.set(calendar_for_db)
+    
+    # Add ISO timestamps to the original calendar for JSON serialization
+    now = datetime.utcnow()
+    calendar["createdAt"] = now.isoformat()
+    calendar["updatedAt"] = now.isoformat()
     
     return ref.id
 
@@ -59,26 +65,18 @@ def get_calendar(calendar_id: str) -> dict:
             "reschedulingHistory": []
         }
 
-    if db is None:
-        print("Database not available. Returning mock calendar.")
-        return {
-            "calendarId": calendar_id,
-            "crop": "Tomato",
-            "lifecycle": [],
-            "status": "active",
-            "userId": "mock_user",
-            "sowingDate": "2023-01-01",
-            "durationDays": 100,
-            "location": {"lat": 0, "lng": 0},
-            "optimalConditions": {},
-            "reschedulingHistory": []
-        }
-
     doc = db.collection("calendars").document(calendar_id).get()
     
     if doc.exists:
         calendar = doc.to_dict()
         calendar["calendarId"] = doc.id
+        
+        # Convert Firestore timestamps to ISO format for JSON serialization
+        if "createdAt" in calendar and hasattr(calendar["createdAt"], "isoformat"):
+            calendar["createdAt"] = calendar["createdAt"].isoformat()
+        if "updatedAt" in calendar and hasattr(calendar["updatedAt"], "isoformat"):
+            calendar["updatedAt"] = calendar["updatedAt"].isoformat()
+        
         return calendar
     else:
         return None
@@ -98,9 +96,14 @@ def update_calendar(calendar_id: str, calendar: dict) -> bool:
     if db is None:
         return True
 
-    calendar["updatedAt"] = firestore.SERVER_TIMESTAMP
+    # Create a copy for Firestore with SERVER_TIMESTAMP
+    calendar_for_db = calendar.copy()
+    calendar_for_db["updatedAt"] = firestore.SERVER_TIMESTAMP
     
-    db.collection("calendars").document(calendar_id).set(calendar, merge=True)
+    db.collection("calendars").document(calendar_id).set(calendar_for_db, merge=True)
+    
+    # Update original with ISO timestamp for JSON serialization
+    calendar["updatedAt"] = datetime.utcnow().isoformat()
     
     return True
 
