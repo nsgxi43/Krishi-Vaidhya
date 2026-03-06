@@ -3,11 +3,7 @@ Flask>=2.3.0
 flask-cors>=4.0.0
 requests>=2.31.0
 python-dotenv>=1.0.0
-
-# ML / Computer Vision
-numpy>=1.24.0
-opencv-python>=4.8.0
-tensorflow>=2.13.0
+gunicorn>=21.2.0
 
 # Firebase
 firebase-admin>=6.2.0
@@ -15,8 +11,13 @@ firebase-admin>=6.2.0
 # Google Cloud & Authentication
 google-auth>=2.23.0
 
+# Google Generative AI (Gemini)
+google-generativeai>=0.8.0
+
 # Geolocation
 python-geohash>=0.8.5
 
-# Testing (Optional)
-pytest>=7.4.0
+# ML / Computer Vision (optional — app falls back to Gemini Vision if unavailable)
+# tensorflow>=2.13.0   # Too large for cloud free tier (500MB+). Disabled for Railway.
+# opencv-python>=4.8.0 # Requires tensorflow. Disabled for Railway.
+numpy>=1.24.0

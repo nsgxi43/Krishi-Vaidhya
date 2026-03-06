@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,15 +10,25 @@ class OfflineService {
   static const String _lastDiagnosisKey = 'offline_last_diagnosis';
   static const String _assetPath = 'assets/offline_data/crop_diseases.json';
 
+  /// The health-check URL — mirrors ApiService logic.
+  static String get _healthUrl {
+    if (!kDebugMode) {
+      return "https://krishi-vaidhya-backend-production.up.railway.app/";
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return "http://10.0.2.2:5001/";
+    }
+    return "http://127.0.0.1:5001/";
+  }
+
   // ─── Connectivity ────────────────────────────────────────────────────────
 
-  /// Returns true if the backend is reachable (which implies internet is also up,
-  /// because the backend itself calls external APIs like Gemini & Weather).
+  /// Returns true if the backend is reachable.
   static Future<bool> isOnline() async {
     try {
       final response = await http
-          .get(Uri.parse('http://127.0.0.1:5001/'))
-          .timeout(const Duration(seconds: 4));
+          .get(Uri.parse(_healthUrl))
+          .timeout(const Duration(seconds: 8));
       return response.statusCode == 200;
     } catch (_) {
       return false;

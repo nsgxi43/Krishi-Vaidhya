@@ -7,16 +7,26 @@ import '../models/diagnosis_response.dart';
 import '../models/prediction_alert.dart';
 
 class ApiService {
+  /// Production backend URL (Railway cloud deployment).
+  /// Update this after Railway deployment is complete.
+  static const String _railwayUrl = "https://krishi-vaidhya-backend-production.up.railway.app/api";
+
   static String get baseUrl {
+    // In release mode (APK), always use the Railway cloud backend
+    if (!kDebugMode) {
+      return _railwayUrl;
+    }
+
+    // Debug mode: use local backend
     if (kIsWeb) {
       return "http://127.0.0.1:5001/api";
     }
-    
+
     if (defaultTargetPlatform == TargetPlatform.android) {
       // Android Emulator uses 10.0.2.2 for host
       return "http://10.0.2.2:5001/api";
     }
-    
+
     // Default/iOS
     return "http://127.0.0.1:5001/api";
   }

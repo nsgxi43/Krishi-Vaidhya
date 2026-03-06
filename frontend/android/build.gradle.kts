@@ -5,6 +5,25 @@ allprojects {
     }
 }
 
+// Force all subprojects to use consistent JVM target
+subprojects {
+    afterEvaluate {
+        if (project.hasProperty("android")) {
+            (project.extensions.findByName("android") as? com.android.build.gradle.LibraryExtension)?.apply {
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+            }
+        }
+        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            }
+        }
+    }
+}
+
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")

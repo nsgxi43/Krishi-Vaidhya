@@ -335,5 +335,7 @@ def get_current_weather():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Force port 5001 to match frontend expectations
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    # Use PORT env var (set by Railway/cloud) or fallback to 5001 for local dev
+    port = int(os.environ.get('PORT', 5001))
+    debug = os.environ.get('FLASK_ENV', 'production') == 'development'
+    app.run(host='0.0.0.0', port=port, debug=debug)

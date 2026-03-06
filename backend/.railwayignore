@@ -1,0 +1,8 @@
+senv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.log
+*.h5
