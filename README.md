@@ -132,6 +132,4 @@ Krishi-Vaidhya/
 
 [Add your license information here]
 
-## 👥 Contributors
 
-[Add contributor information here]
