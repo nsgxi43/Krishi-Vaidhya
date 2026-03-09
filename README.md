@@ -128,8 +128,6 @@ Krishi-Vaidhya/
    flutter run
    ```
 
-## 📝 License
 
-[Add your license information here]
 
 
