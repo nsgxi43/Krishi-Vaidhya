@@ -10,9 +10,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
-
 BASE_URL = "http://api.weatherapi.com/v1"
+
+
+def _get_weather_key() -> str:
+    """Always read from environment at call time (never cached at import time)."""
+    return os.getenv("WEATHER_API_KEY", "")
 
 
 def get_weather_forecast(lat: float, lng: float, days: int = 7) -> dict:
@@ -27,7 +30,8 @@ def get_weather_forecast(lat: float, lng: float, days: int = 7) -> dict:
     Returns:
         Weather forecast data
     """
-    if not WEATHER_API_KEY:
+    weather_api_key = _get_weather_key()
+    if not weather_api_key:
         print("Weather API Key not set. Returning mock forecast.")
         # Return mock data
         return {
@@ -52,7 +56,7 @@ def get_weather_forecast(lat: float, lng: float, days: int = 7) -> dict:
     url = f"{BASE_URL}/forecast.json"
     
     params = {
-        "key": WEATHER_API_KEY,
+        "key": weather_api_key,
         "q": f"{lat},{lng}",
         "days": min(days, 14),  # API supports up to 14 days
         "aqi": "no",

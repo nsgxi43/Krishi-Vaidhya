@@ -14,16 +14,20 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-GOOGLE_MAPS_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
-
 GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 PLACE_URL = "https://maps.googleapis.com/maps/api/place/details/json"
 NEARBY_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
 
+def _get_maps_key() -> str:
+    """Always read from environment at call time (never cached at import time)."""
+    return os.getenv("GOOGLE_MAPS_API_KEY", "")
+
+
 def reverse_geocode(lat: float, lng: float) -> dict:
     """Call Google Geocoding API to get address components."""
-    if not GOOGLE_MAPS_KEY:
+    google_maps_key = _get_maps_key()
+    if not google_maps_key:
         print("Google Maps API Key not set. Returning mock geocode.")
         return {
             "status": "OK",
@@ -41,7 +45,7 @@ def reverse_geocode(lat: float, lng: float) -> dict:
 
     params = {
         "latlng": f"{lat},{lng}",
-        "key": GOOGLE_MAPS_KEY
+        "key": google_maps_key
     }
     res = requests.get(GEOCODE_URL, params=params, timeout=10)
     res.raise_for_status()
@@ -50,13 +54,14 @@ def reverse_geocode(lat: float, lng: float) -> dict:
 
 def place_details(place_id: str) -> dict:
     """Get detailed information about a place."""
-    if not GOOGLE_MAPS_KEY:
+    google_maps_key = _get_maps_key()
+    if not google_maps_key:
         return {}
 
     params = {
         "place_id": place_id,
         "fields": "name,geometry,address_component,rating,website",
-        "key": GOOGLE_MAPS_KEY
+        "key": google_maps_key
     }
     res = requests.get(PLACE_URL, params=params, timeout=10)
     res.raise_for_status()
@@ -65,7 +70,8 @@ def place_details(place_id: str) -> dict:
 
 def nearby_search(lat: float, lng: float, radius_m: int, keyword: str, place_type: str = "store") -> dict:
     """Search for nearby places using Google Places API."""
-    if not GOOGLE_MAPS_KEY:
+    google_maps_key = _get_maps_key()
+    if not google_maps_key:
         print("Google Maps API Key not set. Returning mock places.")
         return {
             "status": "OK",
@@ -96,7 +102,7 @@ def nearby_search(lat: float, lng: float, radius_m: int, keyword: str, place_typ
         "radius": radius_m,
         "type": place_type,
         "keyword": keyword,
-        "key": GOOGLE_MAPS_KEY
+        "key": google_maps_key
     }
     res = requests.get(NEARBY_SEARCH_URL, params=params, timeout=10)
     res.raise_for_status()

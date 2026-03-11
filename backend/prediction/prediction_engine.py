@@ -23,9 +23,13 @@ from db.firebase_init import db
 from agri_calendar.weather_service import get_weather_forecast
 
 # ── Gemini config (reuse from doc_feature) ────────────────────────────
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODELS = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
 API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+
+
+def _get_gemini_key() -> str:
+    """Always read from environment at call time (never cached at import time)."""
+    return os.getenv("GEMINI_API_KEY", "")
 
 # ── Search parameters ─────────────────────────────────────────────────
 DEFAULT_RADIUS_KM = 25          # Lookup radius for nearby diagnoses
@@ -589,7 +593,8 @@ def _generate_llm_risk_summary(alert_data: dict) -> Optional[str]:
     Use Gemini to generate a concise, farmer-friendly risk summary.
     Falls back to a template if LLM is unavailable.
     """
-    if not GEMINI_API_KEY:
+    gemini_api_key = _get_gemini_key()
+    if not gemini_api_key:
         return _generate_local_risk_summary(alert_data)
 
     prompt = f"""You are a crop disease risk advisor for Indian farmers.
@@ -613,7 +618,7 @@ Return ONLY the summary text, no JSON, no markdown.
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
     for model in GEMINI_MODELS:
-        url = f"{API_BASE}/{model}:generateContent?key={GEMINI_API_KEY}"
+        url = f"{API_BASE}/{model}:generateContent?key={gemini_api_key}"
         try:
             resp = requests.post(
                 url,
@@ -622,12 +627,46 @@ Return ONLY the summary text, no JSON, no markdown.
                 timeout=30,
             )
             if resp.status_code in (403, 404, 429):
+                # write debug info for failed model
+                with open("gemini_debug.log", "a") as f:
+                    f.write(f"\n[PredEngine] model={model} status={resp.status_code} body={resp.text}\n")
                 continue
             resp.raise_for_status()
-            text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-            return text.strip()
+            body = None
+            try:
+                body = resp.json()
+            except Exception:
+                body = None
+
+            # safe extraction
+            text = None
+            if isinstance(body, dict):
+                def find_text(o):
+                    if isinstance(o, dict):
+                        for k, v in o.items():
+                            if k == "text" and isinstance(v, str):
+                                return v
+                            res = find_text(v)
+                            if res:
+                                return res
+                    if isinstance(o, list):
+                        for item in o:
+                            res = find_text(item)
+                            if res:
+                                return res
+                    return None
+                text = find_text(body)
+
+            if text:
+                return text.strip()
+            else:
+                with open("gemini_debug.log", "a") as f:
+                    f.write(f"\n[PredEngine] model={model} no text found status={resp.status_code} body={resp.text}\n")
+                continue
         except Exception as e:
             print(f"[PredictionEngine] LLM risk summary failed ({model}): {e}")
+            with open("gemini_debug.log", "a") as f:
+                f.write(f"\n[PredEngine EXC] model={model} err={e}\n")
             continue
 
     return _generate_local_risk_summary(alert_data)

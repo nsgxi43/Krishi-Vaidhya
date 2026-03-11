@@ -30,6 +30,18 @@ def home():
         "database": db_status
     })
 
+@app.route('/api/debug/env')
+def debug_env():
+    """Diagnostic endpoint — shows which env vars are set (NOT their values)."""
+    return jsonify({
+        "GEMINI_API_KEY":       "SET" if os.environ.get("GEMINI_API_KEY") else "MISSING",
+        "WEATHER_API_KEY":      "SET" if os.environ.get("WEATHER_API_KEY") else "MISSING",
+        "GOOGLE_MAPS_API_KEY":  "SET" if os.environ.get("GOOGLE_MAPS_API_KEY") else "MISSING",
+        "FIREBASE_KEY_JSON":    "SET" if os.environ.get("FIREBASE_KEY_JSON") else "MISSING",
+        "FLASK_ENV":            os.environ.get("FLASK_ENV", "not set"),
+        "PORT":                 os.environ.get("PORT", "not set"),
+    })
+
 # --- USER ROUTES ---
 @app.route('/api/users/login', methods=['POST'])
 def login_user():

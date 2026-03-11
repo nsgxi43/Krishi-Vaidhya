@@ -9,7 +9,9 @@ import json
 import requests  # type: ignore
 import base64
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+def _get_api_key() -> str:
+    """Always read from environment at call time (never cached at import time)."""
+    return os.getenv("GEMINI_API_KEY", "")
 
 # Gemini model fallback chain: try newer models first, fall back to older ones
 GEMINI_MODELS = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
@@ -24,7 +26,8 @@ def analyze_image_with_gemini(image_path: str) -> dict:
     """
     Fallback: Diagnose crop disease directly using Gemini Vision.
     """
-    if not GEMINI_API_KEY:
+    api_key = _get_api_key()
+    if not api_key:
         print("GEMINI_API_KEY not set. Cannot use Cloud AI.")
         raise ValueError("Missing Gemini API Key")
 
@@ -85,42 +88,111 @@ def analyze_image_with_gemini(image_path: str) -> dict:
             # Try each model in the fallback chain
             current_model = GEMINI_MODELS[min(attempt, len(GEMINI_MODELS) - 1)]
             current_url = f"{API_BASE}/{current_model}:generateContent"
-            
-            try:
-                response = requests.post(
-                    f"{current_url}?key={GEMINI_API_KEY}",
-                    headers={"Content-Type": "application/json"},
-                    data=json.dumps(payload),
-                    timeout=30
-                )
-                
-                if response.status_code == 429:
-                    wait_time = 2 ** (attempt + 2) # 4s, 8s, 16s
-                    print(f"Rate limited (429) on {current_model}. Retrying in {wait_time}s...")
-                    time.sleep(wait_time)
-                    last_error = "Rate Limit Exceeded (429)"
+
+            # Try two ways of authenticating: ?key= and Authorization header
+            tried_variants = [f"{current_url}?key={api_key}"]
+            try_auth_header = True
+            if try_auth_header:
+                tried_variants.append(current_url)
+
+            for url in tried_variants:
+                try:
+                    headers = {"Content-Type": "application/json"}
+                    # If using header auth variant, add bearer header
+                    if url == current_url:
+                        headers["Authorization"] = f"Bearer {api_key}"
+
+                    response = requests.post(
+                        url,
+                        headers=headers,
+                        data=json.dumps(payload),
+                        timeout=30
+                    )
+
+                    # Save some debug info
+                    status = response.status_code
+
+                    if status == 429:
+                        wait_time = 2 ** (attempt + 2)  # 4s, 8s, 16s
+                        print(f"Rate limited (429) on {current_model}. Retrying in {wait_time}s...")
+                        last_error = "Rate Limit Exceeded (429)"
+                        time.sleep(wait_time)
+                        continue
+
+                    if status == 403:
+                        last_error = f"API key rejected (403) for {current_model}"
+                        print(f"API key rejected for {current_model}. Trying next model...")
+                        continue
+
+                    if status == 404:
+                        last_error = f"Model {current_model} not found (404)"
+                        print(f"Model {current_model} not found. Trying next...")
+                        continue
+
+                    # Try to parse JSON safely and extract text in multiple ways
+                    try:
+                        body = response.json()
+                    except Exception:
+                        body = None
+
+                    # Candidate path used previously
+                    raw = None
+                    if isinstance(body, dict):
+                        # Common safe traversal used by the API
+                        cand = body.get("candidates")
+                        if isinstance(cand, list) and len(cand) > 0:
+                            content = cand[0].get("content")
+                            if isinstance(content, dict):
+                                parts = content.get("parts")
+                                if isinstance(parts, list) and len(parts) > 0:
+                                    first = parts[0]
+                                    raw = first.get("text") or first.get("payload") or None
+
+                        # Fallback: try to find any 'text' field nested
+                        if raw is None:
+                            def find_text(o):
+                                if isinstance(o, dict):
+                                    for k, v in o.items():
+                                        if k == "text" and isinstance(v, str):
+                                            return v
+                                        res = find_text(v)
+                                        if res:
+                                            return res
+                                if isinstance(o, list):
+                                    for item in o:
+                                        res = find_text(item)
+                                        if res:
+                                            return res
+                                return None
+                            raw = find_text(body)
+
+                    if raw:
+                        try:
+                            return _extract_json(raw)
+                        except Exception as e:
+                            last_error = f"Failed to extract JSON from LLM text: {e}"
+                            # Log and continue to next variant/model
+                            with open("gemini_debug.log", "a") as f:
+                                f.write(f"\n[EXTRACT_ERROR] model={current_model} url={url} status={status} error={e}\nraw_output=\n{raw}\n")
+                            continue
+
+                    # If we reach here, no usable text was found — log full response and try next
+                    with open("gemini_debug.log", "a") as f:
+                        f.write(f"\n[LLM_FAIL] model={current_model} url={url} status={status}\nresponse_text=\n{response.text}\n")
+
+                    last_error = f"No text candidate found (status={status})"
+
+                except requests.exceptions.HTTPError:
+                    last_error = f"HTTP error for {current_model}"
                     continue
-                
-                if response.status_code == 403:
-                    last_error = f"API key rejected (403) for {current_model}"
-                    print(f"API key rejected for {current_model}. Trying next model...")
-                    continue
-                
-                if response.status_code == 404:
-                    last_error = f"Model {current_model} not found (404)"
-                    print(f"Model {current_model} not found. Trying next...")
-                    continue
-                
-                response.raise_for_status()
-                raw = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-                return _extract_json(raw)
-                
-            except requests.exceptions.HTTPError:
-                last_error = f"HTTP error for {current_model}"
-                continue
-            except Exception as e:
-                last_error = str(e)
-                raise e
+                except Exception as e:
+                    last_error = str(e)
+                    # Write trace for debugging
+                    import traceback
+                    with open("gemini_debug.log", "a") as f:
+                        f.write(f"\n[EXC] model={current_model} url={url} err={e}\nTrace:\n{traceback.format_exc()}\n")
+                    # Re-raise critical network errors
+                    raise e
 
     except Exception as e:
         import traceback
@@ -188,7 +260,8 @@ def _extract_json(text: str) -> dict:
 def get_llm_explanation(ml_output: dict) -> dict:
     _validate_ml_output(ml_output)
 
-    if not GEMINI_API_KEY:
+    api_key = _get_api_key()
+    if not api_key:
         print("GEMINI_API_KEY not set. Returning local explanation.")
         return _generate_local_explanation(ml_output)
 
@@ -218,7 +291,7 @@ prevention_tips
         url = f"{API_BASE}/{model_name}:generateContent"
         try:
             response = requests.post(
-                f"{url}?key={GEMINI_API_KEY}",
+                f"{url}?key={api_key}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(payload),
                 timeout=60
