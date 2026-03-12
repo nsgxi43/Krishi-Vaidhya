@@ -1,8 +1,8 @@
-# Krishi Vaidhya - AI Crop Disease Doctor 🌿
+# Krishi Vaidhya - AI Crop Disease Doctor 
 
 Krishi Vaidhya is an AI-powered agricultural assistant designed to help farmers diagnose crop diseases, manage planting schedules, and connect with a community of experts and peers.
 
-## 🚀 Features
+## Features
 
 - **AI Crop Diagnosis**: Upload or capture photos of crop leaves to get instant, AI-powered disease diagnosis and treatment recommendations
 - **Agricultural Calendar**: Generate a personalized sowing-to-harvest calendar based on your crop type, sowing date, and local weather conditions
@@ -13,7 +13,7 @@ Krishi Vaidhya is an AI-powered agricultural assistant designed to help farmers 
 - **Weather Integration**: Real-time weather updates and farming recommendations
 - **Smart Reminders**: Timely notifications for farming activities
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - **Flutter** (Android/iOS/Web)
@@ -30,7 +30,7 @@ Krishi Vaidhya is an AI-powered agricultural assistant designed to help farmers 
   - `APScheduler` for background tasks and reminders
   - Weather API integration
 
-## 📐 Architecture & Design
+## Architecture & Design
 
 ### System Architecture
 The following diagram illustrates the overall system architecture and component interactions:
@@ -64,7 +64,7 @@ Workflow and process flows within the application:
 
 ![Activity Diagram](Activity%20Diagram.png)
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 Krishi-Vaidhya/
@@ -87,7 +87,7 @@ Krishi-Vaidhya/
 └── README.md             # This file
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Backend Setup
 
